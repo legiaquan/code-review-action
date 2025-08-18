@@ -7,7 +7,7 @@ export class OpenAIProvider extends BaseProvider {
 
   constructor(apiKey: string) {
     super(apiKey);
-    
+
     try {
       this.client = new OpenAI({
         apiKey: apiKey,
@@ -17,7 +17,7 @@ export class OpenAIProvider extends BaseProvider {
         `Failed to initialize OpenAI provider: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'openai',
         undefined,
-        error instanceof Error ? error : undefined
+        error instanceof Error ? error : undefined,
       );
     }
   }
@@ -25,13 +25,14 @@ export class OpenAIProvider extends BaseProvider {
   async review(params: ReviewParams): Promise<ReviewResult> {
     try {
       const prompt = this.buildPrompt(params);
-      
+
       const completion = await this.client.chat.completions.create({
         model: this.model,
         messages: [
           {
             role: 'system',
-            content: 'You are a senior software engineer and expert code reviewer. Provide thorough, constructive feedback on code changes.',
+            content:
+              'You are a senior software engineer and expert code reviewer. Provide thorough, constructive feedback on code changes.',
           },
           {
             role: 'user',
@@ -46,14 +47,14 @@ export class OpenAIProvider extends BaseProvider {
       });
 
       const response = completion.choices[0]?.message?.content;
-      
+
       if (!response || response.trim() === '') {
         throw new ProviderError('Empty response received from OpenAI', 'openai');
       }
 
       // Extract usage information
       const tokensUsed = completion.usage?.total_tokens;
-      
+
       // Cost calculation for GPT-4 Turbo (as of 2024)
       // Input: $0.01 per 1K tokens, Output: $0.03 per 1K tokens
       const inputTokens = completion.usage?.prompt_tokens || 0;
@@ -76,12 +77,12 @@ export class OpenAIProvider extends BaseProvider {
         const errorObj = error as { status?: number; message?: string };
         const status = errorObj.status;
         const message = errorObj.message || 'Unknown OpenAI API error';
-        
+
         throw new ProviderError(
           `OpenAI API error: ${message}`,
           'openai',
           status,
-          error instanceof Error ? error : undefined
+          error instanceof Error ? error : undefined,
         );
       }
 
@@ -89,14 +90,14 @@ export class OpenAIProvider extends BaseProvider {
         `Unexpected error during OpenAI review: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'openai',
         undefined,
-        error instanceof Error ? error : undefined
+        error instanceof Error ? error : undefined,
       );
     }
   }
 
   protected buildPrompt(params: ReviewParams): string {
     const basePrompt = super.buildPrompt(params);
-    
+
     // Add OpenAI-specific instructions
     const openaiInstructions = `
 Please structure your response as follows:

@@ -3,13 +3,13 @@ import * as github from '@actions/github';
 import { Config } from './config';
 import { FileUtils } from './file-utils';
 import { ProviderFactory } from './providers';
-import { 
-  ActionInputs, 
-  FileChange, 
-  ReviewResult, 
-  ProviderError, 
-  ConfigError, 
-  FileProcessingError 
+import {
+  ActionInputs,
+  FileChange,
+  ReviewResult,
+  ProviderError,
+  ConfigError,
+  FileProcessingError,
 } from './types';
 
 class AICodeReview {
@@ -28,10 +28,10 @@ class AICodeReview {
   async run(): Promise<void> {
     try {
       core.info('🚀 Starting AI Code Review...');
-      
+
       // Get changed files from PR
       const changedFiles = await this.getChangedFiles();
-      
+
       if (changedFiles.length === 0) {
         core.info('No files to review');
         return;
@@ -41,7 +41,7 @@ class AICodeReview {
       const filteredFiles = FileUtils.filterFiles(
         changedFiles,
         this.config.includeGlobs,
-        this.config.excludeGlobs
+        this.config.excludeGlobs,
       );
 
       if (filteredFiles.length === 0) {
@@ -70,7 +70,7 @@ class AICodeReview {
   private async getChangedFiles(): Promise<FileChange[]> {
     try {
       core.info(`📋 Fetching changed files for PR #${this.prNumber}`);
-      
+
       const { data: files } = await this.octokit.rest.pulls.listFiles({
         owner: this.repoInfo.owner,
         repo: this.repoInfo.repo,
@@ -93,25 +93,25 @@ class AICodeReview {
           core.warning(`Invalid file change object for: ${(file as any)?.filename || 'unknown'}`);
           return false;
         }
-        
+
         if (!FileUtils.isTextFile(file.filename)) {
           core.debug(`Skipping non-text file: ${file.filename}`);
           return false;
         }
-        
+
         return true;
       });
 
       const summary = FileUtils.getChangesSummary(validFiles);
       const totals = FileUtils.getTotalChanges(validFiles);
-      
+
       core.info(`📊 Changes summary: ${JSON.stringify(summary)}`);
       core.info(`📈 Total changes: +${totals.additions} -${totals.deletions} (~${totals.changes})`);
 
       return validFiles;
     } catch (error) {
       throw new FileProcessingError(
-        `Failed to fetch changed files: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to fetch changed files: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
   }
@@ -119,16 +119,16 @@ class AICodeReview {
   private async reviewFiles(files: FileChange[]): Promise<ReviewResult[]> {
     const provider = ProviderFactory.createProvider(this.config.provider, this.config.apiKey);
     const results: ReviewResult[] = [];
-    
+
     core.info(`🤖 Starting review with ${this.config.provider} provider`);
-    
+
     let totalTokens = 0;
     let totalCost = 0;
 
     for (const file of files) {
       try {
         core.info(`🔍 Reviewing file: ${file.filename}`);
-        
+
         if (!file.patch) {
           core.warning(`No patch content for file: ${file.filename}`);
           continue;
@@ -136,7 +136,7 @@ class AICodeReview {
 
         // Chunk the diff if it's too large
         const chunkedDiff = FileUtils.chunkDiff(file, this.config.maxChunkLines);
-        
+
         if (chunkedDiff.chunks.length === 0) {
           core.info(`No meaningful chunks found for: ${file.filename}`);
           continue;
@@ -154,20 +154,23 @@ class AICodeReview {
             rules: this.config.rules,
             fileName: file.filename,
             reviewLevel: this.config.reviewLevel,
-            part: chunkedDiff.chunks.length > 1 ? {
-              index: chunk.index,
-              total: chunk.total,
-            } : undefined,
+            part:
+              chunkedDiff.chunks.length > 1
+                ? {
+                    index: chunk.index,
+                    total: chunk.total,
+                  }
+                : undefined,
           };
 
           const result = await provider.review(reviewParams);
-          
+
           if (result.comment && result.comment.trim()) {
             results.push({
               ...result,
               comment: this.formatReviewComment(result.comment, file.filename, chunk),
             });
-            
+
             if (result.tokensUsed) totalTokens += result.tokensUsed;
             if (result.costUSD) totalCost += result.costUSD;
           }
@@ -176,13 +179,15 @@ class AICodeReview {
           await this.delay(100);
         }
       } catch (error) {
-        core.error(`Failed to review ${file.filename}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        
+        core.error(
+          `Failed to review ${file.filename}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
+
         if (error instanceof ProviderError) {
           // Continue with other files if one fails
           continue;
         }
-        
+
         throw error;
       }
     }
@@ -190,7 +195,7 @@ class AICodeReview {
     if (totalTokens > 0) {
       core.info(`📊 Total tokens used: ${totalTokens.toLocaleString()}`);
     }
-    
+
     if (totalCost > 0) {
       core.info(`💰 Estimated cost: $${totalCost.toFixed(4)}`);
     }
@@ -201,9 +206,9 @@ class AICodeReview {
   private async postReviewComment(results: ReviewResult[], files: FileChange[]): Promise<void> {
     try {
       const comment = this.buildFinalComment(results, files);
-      
+
       core.info('💬 Posting review comment to PR...');
-      
+
       await this.octokit.rest.issues.createComment({
         owner: this.repoInfo.owner,
         repo: this.repoInfo.repo,
@@ -214,20 +219,20 @@ class AICodeReview {
       core.info('✅ Review comment posted successfully');
     } catch (error) {
       throw new Error(
-        `Failed to post review comment: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to post review comment: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
   }
 
   private formatReviewComment(comment: string, filename: string, chunk?: any): string {
     let formatted = `### 📄 ${filename}\n\n`;
-    
+
     if (chunk && chunk.index && chunk.total > 1) {
       formatted += `*Part ${chunk.index} of ${chunk.total} (lines ${chunk.startLine}-${chunk.endLine})*\n\n`;
     }
-    
+
     formatted += comment;
-    
+
     return formatted;
   }
 
@@ -235,7 +240,7 @@ class AICodeReview {
     const summary = FileUtils.getChangesSummary(files);
     const totals = FileUtils.getTotalChanges(files);
     const provider = results[0]?.provider || this.config.provider;
-    
+
     let comment = `## 🤖 AI Code Review\n\n`;
     comment += `**Provider:** ${provider.toUpperCase()}\n`;
     comment += `**Files reviewed:** ${results.length} of ${files.length} changed files\n`;
@@ -260,19 +265,21 @@ class AICodeReview {
     }
 
     comment += `<details>\n<summary>📊 Review Statistics</summary>\n\n`;
-    comment += `- **Files changed:** ${Object.entries(summary).map(([status, count]) => `${count} ${status}`).join(', ')}\n`;
-    
+    comment += `- **Files changed:** ${Object.entries(summary)
+      .map(([status, count]) => `${count} ${status}`)
+      .join(', ')}\n`;
+
     const totalTokens = results.reduce((sum, r) => sum + (r.tokensUsed || 0), 0);
     const totalCost = results.reduce((sum, r) => sum + (r.costUSD || 0), 0);
-    
+
     if (totalTokens > 0) {
       comment += `- **Tokens used:** ${totalTokens.toLocaleString()}\n`;
     }
-    
+
     if (totalCost > 0) {
       comment += `- **Estimated cost:** $${totalCost.toFixed(4)}\n`;
     }
-    
+
     comment += `\n</details>\n\n`;
     comment += `*Generated by [AI Code Review Action](https://github.com/marketplace/actions/ai-code-review)*`;
 

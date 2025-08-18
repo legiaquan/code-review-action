@@ -19,11 +19,11 @@ export interface AIProvider {
 
 export abstract class BaseProvider implements AIProvider {
   protected abstract model: string;
-  
+
   constructor(protected apiKey: string) {}
-  
+
   abstract review(params: ReviewParams): Promise<ReviewResult>;
-  
+
   protected buildPrompt(params: ReviewParams): string {
     const base = `You are a senior software engineer. Act as a rigorous code reviewer.
 Review the following patch and produce:
@@ -38,9 +38,9 @@ Please provide your review in a clear, structured format. Focus on actionable fe
       ? `\nAdditional rules to follow:\n• ${params.rules.join('\n• ')}\n`
       : '';
 
-    const partInfo = params.part 
+    const partInfo = params.part
       ? `\n[Part ${params.part.index} of ${params.part.total}${params.fileName ? ` - ${params.fileName}` : ''}]\n`
-      : params.fileName 
+      : params.fileName
         ? `\n[File: ${params.fileName}]\n`
         : '';
 
@@ -89,7 +89,7 @@ export class ProviderError extends Error {
     message: string,
     public provider: string,
     public statusCode?: number,
-    public originalError?: Error
+    public originalError?: Error,
   ) {
     super(message);
     this.name = 'ProviderError';
@@ -104,7 +104,10 @@ export class ConfigError extends Error {
 }
 
 export class FileProcessingError extends Error {
-  constructor(message: string, public filename?: string) {
+  constructor(
+    message: string,
+    public filename?: string,
+  ) {
     super(message);
     this.name = 'FileProcessingError';
   }

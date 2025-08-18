@@ -1,4 +1,9 @@
-import { GoogleGenerativeAI, GenerativeModel, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
+import {
+  GoogleGenerativeAI,
+  GenerativeModel,
+  HarmCategory,
+  HarmBlockThreshold,
+} from '@google/generative-ai';
 import { BaseProvider, ReviewParams, ReviewResult, ProviderError } from '../types';
 
 export class GeminiProvider extends BaseProvider {
@@ -8,10 +13,10 @@ export class GeminiProvider extends BaseProvider {
 
   constructor(apiKey: string) {
     super(apiKey);
-    
+
     try {
       this.genAI = new GoogleGenerativeAI(apiKey);
-      this.generativeModel = this.genAI.getGenerativeModel({ 
+      this.generativeModel = this.genAI.getGenerativeModel({
         model: this.model,
         generationConfig: {
           temperature: 0.1,
@@ -43,7 +48,7 @@ export class GeminiProvider extends BaseProvider {
         `Failed to initialize Gemini provider: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'gemini',
         undefined,
-        error instanceof Error ? error : undefined
+        error instanceof Error ? error : undefined,
       );
     }
   }
@@ -51,23 +56,23 @@ export class GeminiProvider extends BaseProvider {
   async review(params: ReviewParams): Promise<ReviewResult> {
     try {
       const prompt = this.buildPrompt(params);
-      
+
       const result = await this.generativeModel.generateContent(prompt);
       const response = await result.response;
-      
+
       if (!response) {
         throw new ProviderError('No response received from Gemini', 'gemini');
       }
 
       const text = response.text();
-      
+
       if (!text || text.trim() === '') {
         throw new ProviderError('Empty response received from Gemini', 'gemini');
       }
 
       // Extract token usage if available
       const tokensUsed = response.usageMetadata?.totalTokenCount;
-      
+
       // Rough cost calculation for Gemini (as of 2024)
       // Input: $0.00125 per 1K tokens, Output: $0.005 per 1K tokens
       const inputTokens = response.usageMetadata?.promptTokenCount || 0;
@@ -90,12 +95,12 @@ export class GeminiProvider extends BaseProvider {
         const errorObj = error as { status?: number; message?: string };
         const status = errorObj.status;
         const message = errorObj.message || 'Unknown Gemini API error';
-        
+
         throw new ProviderError(
           `Gemini API error: ${message}`,
           'gemini',
           status,
-          error instanceof Error ? error : undefined
+          error instanceof Error ? error : undefined,
         );
       }
 
@@ -103,14 +108,14 @@ export class GeminiProvider extends BaseProvider {
         `Unexpected error during Gemini review: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'gemini',
         undefined,
-        error instanceof Error ? error : undefined
+        error instanceof Error ? error : undefined,
       );
     }
   }
 
   protected buildPrompt(params: ReviewParams): string {
     const basePrompt = super.buildPrompt(params);
-    
+
     // Add Gemini-specific instructions
     const geminiInstructions = `
 Please respond in markdown format for better readability. Use the following structure:

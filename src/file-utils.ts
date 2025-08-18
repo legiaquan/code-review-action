@@ -8,7 +8,7 @@ export class FileUtils {
   static filterFiles(
     files: FileChange[],
     includeGlobs: string[],
-    excludeGlobs: string[]
+    excludeGlobs: string[],
   ): FileChange[] {
     return files.filter(file => {
       // Skip removed files as they don't have content to review
@@ -17,16 +17,17 @@ export class FileUtils {
       }
 
       // Check include patterns
-      const isIncluded = includeGlobs.length === 0 || 
+      const isIncluded =
+        includeGlobs.length === 0 ||
         includeGlobs.some(pattern => minimatch(file.filename, pattern));
-      
+
       if (!isIncluded) {
         return false;
       }
 
       // Check exclude patterns
       const isExcluded = excludeGlobs.some(pattern => minimatch(file.filename, pattern));
-      
+
       return !isExcluded;
     });
   }
@@ -44,7 +45,7 @@ export class FileUtils {
 
     const lines = file.patch.split('\n');
     const chunks: DiffChunk[] = [];
-    
+
     if (lines.length <= maxLines) {
       // Single chunk if within limit
       chunks.push({
@@ -59,15 +60,15 @@ export class FileUtils {
       let currentChunk: string[] = [];
       let chunkStartLine = 1;
       let chunkIndex = 1;
-      
+
       for (let i = 0; i < lines.length; i++) {
         currentChunk.push(lines[i]!);
-        
+
         // Check if we should create a chunk
-        const shouldCreateChunk = 
+        const shouldCreateChunk =
           currentChunk.length >= maxLines || // Reached max lines
           i === lines.length - 1; // Last line
-        
+
         if (shouldCreateChunk) {
           chunks.push({
             content: currentChunk.join('\n'),
@@ -76,7 +77,7 @@ export class FileUtils {
             index: chunkIndex,
             total: 0, // Will be set after all chunks are created
           });
-          
+
           // Prepare for next chunk with some overlap for context
           const overlapLines = Math.min(5, Math.floor(maxLines * 0.1));
           if (i < lines.length - 1 && currentChunk.length > overlapLines) {
@@ -87,11 +88,11 @@ export class FileUtils {
             currentChunk = [];
             chunkStartLine = i + 2; // +2 because i is 0-based and we want next line
           }
-          
+
           chunkIndex++;
         }
       }
-      
+
       // Update total count for all chunks
       chunks.forEach(chunk => {
         chunk.total = chunks.length;
@@ -133,30 +134,81 @@ export class FileUtils {
   static isTextFile(filename: string): boolean {
     const textExtensions = new Set([
       // Programming languages
-      'js', 'jsx', 'ts', 'tsx', 'py', 'rb', 'php', 'java', 'c', 'cpp', 'cc', 'cxx', 
-      'h', 'hpp', 'cs', 'go', 'rs', 'kt', 'scala', 'swift', 'dart', 'r', 'matlab',
+      'js',
+      'jsx',
+      'ts',
+      'tsx',
+      'py',
+      'rb',
+      'php',
+      'java',
+      'c',
+      'cpp',
+      'cc',
+      'cxx',
+      'h',
+      'hpp',
+      'cs',
+      'go',
+      'rs',
+      'kt',
+      'scala',
+      'swift',
+      'dart',
+      'r',
+      'matlab',
       // Web technologies
-      'html', 'htm', 'css', 'scss', 'sass', 'less', 'vue', 'svelte',
+      'html',
+      'htm',
+      'css',
+      'scss',
+      'sass',
+      'less',
+      'vue',
+      'svelte',
       // Config and data
-      'json', 'yaml', 'yml', 'toml', 'ini', 'cfg', 'conf', 'xml',
+      'json',
+      'yaml',
+      'yml',
+      'toml',
+      'ini',
+      'cfg',
+      'conf',
+      'xml',
       // Documentation
-      'md', 'rst', 'txt', 'tex',
+      'md',
+      'rst',
+      'txt',
+      'tex',
       // Shell scripts
-      'sh', 'bash', 'zsh', 'fish', 'ps1', 'bat', 'cmd',
+      'sh',
+      'bash',
+      'zsh',
+      'fish',
+      'ps1',
+      'bat',
+      'cmd',
       // Database
-      'sql', 'plsql', 'psql',
+      'sql',
+      'plsql',
+      'psql',
       // Others
-      'dockerfile', 'makefile', 'gradle', 'cmake'
+      'dockerfile',
+      'makefile',
+      'gradle',
+      'cmake',
     ]);
 
     const extension = this.getFileExtension(filename);
     const basename = filename.toLowerCase().split('/').pop() || '';
-    
-    return textExtensions.has(extension) || 
-           textExtensions.has(basename) ||
-           basename.startsWith('dockerfile') ||
-           basename.includes('makefile') ||
-           basename.endsWith('.gradle');
+
+    return (
+      textExtensions.has(extension) ||
+      textExtensions.has(basename) ||
+      basename.startsWith('dockerfile') ||
+      basename.includes('makefile') ||
+      basename.endsWith('.gradle')
+    );
   }
 
   /**
@@ -170,25 +222,31 @@ export class FileUtils {
     const requiredFields = ['filename', 'status', 'additions', 'deletions', 'changes'];
     const validStatuses = ['added', 'modified', 'removed', 'renamed'];
 
-    return requiredFields.every(field => field in file) &&
-           validStatuses.includes(file.status) &&
-           typeof file.filename === 'string' &&
-           typeof file.additions === 'number' &&
-           typeof file.deletions === 'number' &&
-           typeof file.changes === 'number';
+    return (
+      requiredFields.every(field => field in file) &&
+      validStatuses.includes(file.status) &&
+      typeof file.filename === 'string' &&
+      typeof file.additions === 'number' &&
+      typeof file.deletions === 'number' &&
+      typeof file.changes === 'number'
+    );
   }
 
   /**
    * Calculate total lines of changes across files
    */
-  static getTotalChanges(files: FileChange[]): { additions: number; deletions: number; changes: number } {
+  static getTotalChanges(files: FileChange[]): {
+    additions: number;
+    deletions: number;
+    changes: number;
+  } {
     return files.reduce(
       (totals, file) => ({
         additions: totals.additions + file.additions,
         deletions: totals.deletions + file.deletions,
         changes: totals.changes + file.changes,
       }),
-      { additions: 0, deletions: 0, changes: 0 }
+      { additions: 0, deletions: 0, changes: 0 },
     );
   }
 
@@ -196,10 +254,13 @@ export class FileUtils {
    * Get summary of file changes by type
    */
   static getChangesSummary(files: FileChange[]): Record<string, number> {
-    return files.reduce((summary, file) => {
-      summary[file.status] = (summary[file.status] || 0) + 1;
-      return summary;
-    }, {} as Record<string, number>);
+    return files.reduce(
+      (summary, file) => {
+        summary[file.status] = (summary[file.status] || 0) + 1;
+        return summary;
+      },
+      {} as Record<string, number>,
+    );
   }
 
   /**
@@ -218,13 +279,15 @@ export class FileUtils {
     const meaningfulLines = lines.filter(line => {
       const trimmed = line.trim();
       // Skip empty lines, pure whitespace changes, and diff headers
-      return trimmed.length > 0 && 
-             !trimmed.match(/^[@\-+\s]*$/) && 
-             !trimmed.startsWith('@@') &&
-             !trimmed.startsWith('diff --git') &&
-             !trimmed.startsWith('index ') &&
-             !trimmed.startsWith('+++') &&
-             !trimmed.startsWith('---');
+      return (
+        trimmed.length > 0 &&
+        !trimmed.match(/^[@\-+\s]*$/) &&
+        !trimmed.startsWith('@@') &&
+        !trimmed.startsWith('diff --git') &&
+        !trimmed.startsWith('index ') &&
+        !trimmed.startsWith('+++') &&
+        !trimmed.startsWith('---')
+      );
     });
 
     return meaningfulLines.length > 0;
