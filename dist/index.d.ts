@@ -11,6 +11,7 @@ declare class AICodeReview {
     private formatReviewComment;
     private buildFinalComment;
     private handleError;
+    private getStatusEmoji;
     private delay;
 }
 declare function main(): Promise<void>;

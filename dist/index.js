@@ -595,6 +595,13 @@ class AICodeReview {
                 return;
             }
             core.info(`📁 Found ${filteredFiles.length} files to review`);
+            // Log all files that will be reviewed
+            core.startGroup('📋 Files to be reviewed:');
+            filteredFiles.forEach((file, index) => {
+                const statusEmoji = this.getStatusEmoji(file.status);
+                core.info(`  ${index + 1}. ${statusEmoji} ${file.filename} (+${file.additions} -${file.deletions})`);
+            });
+            core.endGroup();
             // Review files
             const reviewResults = await this.reviewFiles(filteredFiles);
             // Post review comment
@@ -655,9 +662,11 @@ class AICodeReview {
         core.info(`🤖 Starting review with ${this.config.provider} provider`);
         let totalTokens = 0;
         let totalCost = 0;
-        for (const file of files) {
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
             try {
-                core.info(`🔍 Reviewing file: ${file.filename}`);
+                const statusEmoji = this.getStatusEmoji(file.status);
+                core.info(`🔍 [${i + 1}/${files.length}] Reviewing ${statusEmoji} ${file.filename}`);
                 if (!file.patch) {
                     core.warning(`No patch content for file: ${file.filename}`);
                     continue;
@@ -665,14 +674,20 @@ class AICodeReview {
                 // Chunk the diff if it's too large
                 const chunkedDiff = file_utils_1.FileUtils.chunkDiff(file, this.config.maxChunkLines);
                 if (chunkedDiff.chunks.length === 0) {
-                    core.info(`No meaningful chunks found for: ${file.filename}`);
+                    core.info(`  ⚠️ No meaningful chunks found for: ${file.filename}`);
                     continue;
+                }
+                if (chunkedDiff.chunks.length > 1) {
+                    core.info(`  📄 Split into ${chunkedDiff.chunks.length} chunks for review`);
                 }
                 // Review each chunk
                 for (const chunk of chunkedDiff.chunks) {
                     if (!file_utils_1.FileUtils.isMeaningfulChunk(chunk)) {
-                        core.debug(`Skipping non-meaningful chunk in: ${file.filename}`);
+                        core.debug(`  ⏭️ Skipping non-meaningful chunk in: ${file.filename}`);
                         continue;
+                    }
+                    if (chunkedDiff.chunks.length > 1) {
+                        core.info(`    🔎 Reviewing chunk ${chunk.index}/${chunk.total} (lines ${chunk.startLine}-${chunk.endLine})`);
                     }
                     const reviewParams = {
                         diff: chunk.content,
@@ -696,6 +711,10 @@ class AICodeReview {
                             totalTokens += result.tokensUsed;
                         if (result.costUSD)
                             totalCost += result.costUSD;
+                        core.info(`    ✅ Review completed - Found issues to report`);
+                    }
+                    else {
+                        core.info(`    ✅ Review completed - No issues found`);
                     }
                     // Add small delay to avoid rate limiting
                     await this.delay(100);
@@ -735,51 +754,101 @@ class AICodeReview {
         }
     }
     formatReviewComment(comment, filename, chunk) {
-        let formatted = `### 📄 ${filename}\n\n`;
+        let formatted = `📄 **${filename}**`;
         if (chunk && chunk.index && chunk.total > 1) {
-            formatted += `*Part ${chunk.index} of ${chunk.total} (lines ${chunk.startLine}-${chunk.endLine})*\n\n`;
+            formatted += ` *(Part ${chunk.index}/${chunk.total} - Lines ${chunk.startLine}-${chunk.endLine})*`;
         }
-        formatted += comment;
+        formatted += `\n\n`;
+        // Clean up the comment and add proper formatting
+        const cleanComment = comment.trim();
+        // Add some structure to the comment if it doesn't have any
+        if (!cleanComment.includes('##') && !cleanComment.includes('**') && !cleanComment.includes('-')) {
+            // Split into sentences and format as bullet points if multiple issues
+            const sentences = cleanComment.split(/[.!?]+/).filter(s => s.trim().length > 0);
+            if (sentences.length > 1) {
+                formatted += sentences.map(sentence => `• ${sentence.trim()}`).join('\n') + '\n';
+            }
+            else {
+                formatted += `💡 ${cleanComment}\n`;
+            }
+        }
+        else {
+            formatted += cleanComment;
+        }
         return formatted;
     }
     buildFinalComment(results, files) {
         const summary = file_utils_1.FileUtils.getChangesSummary(files);
         const totals = file_utils_1.FileUtils.getTotalChanges(files);
         const provider = results[0]?.provider || this.config.provider;
-        let comment = `## 🤖 AI Code Review\n\n`;
-        comment += `**Provider:** ${provider.toUpperCase()}\n`;
-        comment += `**Files reviewed:** ${results.length} of ${files.length} changed files\n`;
-        comment += `**Changes:** +${totals.additions} -${totals.deletions} (~${totals.changes} lines)\n\n`;
+        const reviewedFilesCount = new Set(results.map(r => r.comment.match(/### 📄 (.+)/)?.[1])).size;
+        let comment = `## 🤖 AI Code Review Report\n\n`;
+        // Summary section with better formatting
+        comment += `### 📊 Review Summary\n`;
+        comment += `| Metric | Value |\n`;
+        comment += `|--------|-------|\n`;
+        comment += `| **🤖 AI Provider** | ${provider.toUpperCase()} |\n`;
+        comment += `| **📁 Files Changed** | ${files.length} |\n`;
+        comment += `| **🔍 Files Reviewed** | ${reviewedFilesCount} |\n`;
+        comment += `| **📈 Total Changes** | +${totals.additions} -${totals.deletions} (~${totals.changes} lines) |\n`;
+        comment += `| **🎯 Issues Found** | ${results.length} |\n\n`;
+        // Files breakdown
+        comment += `### 📋 Files Overview\n`;
+        files.forEach(file => {
+            const statusEmoji = this.getStatusEmoji(file.status);
+            const hasReview = results.some(r => r.comment.includes(file.filename));
+            const reviewStatus = hasReview ? '🔍 Reviewed' : '✅ Clean';
+            comment += `- ${statusEmoji} \`${file.filename}\` (+${file.additions} -${file.deletions}) - ${reviewStatus}\n`;
+        });
+        comment += `\n`;
         if (this.config.rules.length > 0) {
-            comment += `**Custom rules applied:**\n`;
-            this.config.rules.forEach(rule => {
-                comment += `- ${rule}\n`;
+            comment += `### 📝 Review Rules Applied\n`;
+            this.config.rules.forEach((rule, index) => {
+                comment += `${index + 1}. ${rule}\n`;
             });
             comment += `\n`;
         }
         comment += `---\n\n`;
         if (results.length === 0) {
-            comment += `✅ **No issues found!** The code looks good to go.\n\n`;
+            comment += `## ✅ Excellent Work!\n\n`;
+            comment += `🎉 **No issues found!** Your code looks clean and follows best practices.\n\n`;
+            comment += `All ${files.length} changed file(s) have been reviewed and everything looks good to go! 🚀\n\n`;
         }
         else {
-            results.forEach(result => {
-                comment += `${result.comment}\n\n---\n\n`;
+            comment += `## 🔍 Detailed Review Comments\n\n`;
+            results.forEach((result, index) => {
+                comment += `### ${index + 1}. ${result.comment}\n\n`;
+                if (index < results.length - 1) {
+                    comment += `---\n\n`;
+                }
             });
         }
-        comment += `<details>\n<summary>📊 Review Statistics</summary>\n\n`;
-        comment += `- **Files changed:** ${Object.entries(summary)
-            .map(([status, count]) => `${count} ${status}`)
-            .join(', ')}\n`;
+        // Statistics in collapsible section
         const totalTokens = results.reduce((sum, r) => sum + (r.tokensUsed || 0), 0);
         const totalCost = results.reduce((sum, r) => sum + (r.costUSD || 0), 0);
-        if (totalTokens > 0) {
-            comment += `- **Tokens used:** ${totalTokens.toLocaleString()}\n`;
+        comment += `\n<details>\n<summary>🔢 Technical Details</summary>\n\n`;
+        comment += `**File Status Breakdown:**\n`;
+        Object.entries(summary).forEach(([status, count]) => {
+            const emoji = this.getStatusEmoji(status);
+            comment += `- ${emoji} ${status}: ${count} file(s)\n`;
+        });
+        if (totalTokens > 0 || totalCost > 0) {
+            comment += `\n**AI Usage:**\n`;
+            if (totalTokens > 0) {
+                comment += `- Tokens consumed: ${totalTokens.toLocaleString()}\n`;
+            }
+            if (totalCost > 0) {
+                comment += `- Estimated cost: $${totalCost.toFixed(4)}\n`;
+            }
         }
-        if (totalCost > 0) {
-            comment += `- **Estimated cost:** $${totalCost.toFixed(4)}\n`;
-        }
+        comment += `\n**Review Configuration:**\n`;
+        comment += `- Provider: ${provider}\n`;
+        comment += `- Review Level: ${this.config.reviewLevel}\n`;
+        comment += `- Max Chunk Lines: ${this.config.maxChunkLines}\n`;
+        comment += `- Custom Rules: ${this.config.rules.length > 0 ? 'Yes' : 'No'}\n`;
         comment += `\n</details>\n\n`;
-        comment += `*Generated by [AI Code Review Action](https://github.com/marketplace/actions/ai-code-review)*`;
+        comment += `---\n`;
+        comment += `<sub>🤖 Generated by [AI Code Review Action](https://github.com/legiaquan/code-review-action) • Review ID: \`${Date.now()}\`</sub>`;
         return comment;
     }
     handleError(error) {
@@ -795,6 +864,20 @@ class AICodeReview {
         else {
             const message = error instanceof Error ? error.message : 'Unknown error occurred';
             core.setFailed(`Unexpected error: ${message}`);
+        }
+    }
+    getStatusEmoji(status) {
+        switch (status) {
+            case 'added':
+                return '🆕';
+            case 'modified':
+                return '📝';
+            case 'removed':
+                return '🗑️';
+            case 'renamed':
+                return '📋';
+            default:
+                return '📄';
         }
     }
     delay(ms) {
