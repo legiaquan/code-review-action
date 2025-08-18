@@ -58,9 +58,6 @@ jobs:
           provider: ${{ github.event.inputs.provider || 'gemini' }}
           api_key: ${{ secrets.GEMINI_API_KEY }}
           review_level: 'diff'
-          include_globs: 'src/**/*.ts,src/**/*.js,lib/**/*.ts,lib/**/*.js'
-          exclude_globs: '**/*.test.ts,**/*.spec.ts,**/*.d.ts,**/node_modules/**,**/dist/**'
-          max_chunk_lines: 400
           rules: |
             Focus on TypeScript best practices
             Check for potential security vulnerabilities  

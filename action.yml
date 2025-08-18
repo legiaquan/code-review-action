@@ -23,12 +23,12 @@ inputs:
   include_globs:
     description: 'Glob patterns for files to include (comma-separated)'
     required: false
-    default: 'src/**/*.ts,src/**/*.js,lib/**/*.ts,lib/**/*.js'
+    default: 'src/**/*.ts,src/**/*.js,*.ts,*.js'
   
   exclude_globs:
     description: 'Glob patterns for files to exclude (comma-separated)'
     required: false
-    default: '**/*.lock,**/dist/**,**/node_modules/**,**/*.min.js'
+    default: '**/*.test.ts,**/*.spec.ts,**/*.d.ts,**/node_modules/**,**/dist/**,**/*.lock,**/*.min.js,**/*.bundle.js,**/coverage/**,**/.git/**'
   
   max_chunk_lines:
     description: 'Maximum lines per chunk for AI review'
@@ -37,6 +37,11 @@ inputs:
   
   rules:
     description: 'Custom review rules (comma-separated or newline-separated)'
+    required: false
+    default: ''
+  
+  pr_number:
+    description: 'Pull request number (for workflow_dispatch)'
     required: false
     default: ''
 
