@@ -1,0 +1,302 @@
+name: Test AI Code Review Action
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_scenario:
+        description: 'Test scenario to run'
+        required: false
+        default: 'basic'
+        type: choice
+        options:
+          - 'basic'
+          - 'security-focused'
+          - 'performance-focused'
+          - 'typescript-focused'
+      provider:
+        description: 'AI provider to test'
+        required: false
+        default: 'gemini'
+        type: choice
+        options:
+          - 'gemini'
+          - 'openai'
+      create_pr:
+        description: 'Create a test PR automatically'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  create-test-pr:
+    name: Create Test PR
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.create_pr == 'true' }}
+    outputs:
+      pr_number: ${{ steps.create-pr.outputs.pr_number }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create test branch
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          # Create a unique branch name
+          BRANCH_NAME="test-review-$(date +%s)"
+          git checkout -b $BRANCH_NAME
+          
+          # Make some changes to test file
+          echo "// Added test comment $(date)" >> test-sample.ts
+          git add test-sample.ts
+          git commit -m "Add test changes for AI review"
+          git push origin $BRANCH_NAME
+          
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+
+      - name: Create Pull Request
+        id: create-pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Test AI Code Review - ${{ github.event.inputs.test_scenario }}',
+              head: process.env.BRANCH_NAME,
+              base: 'main',
+              body: `
+              ## Test AI Code Review Action
+              
+              This is an automated test PR to verify the AI Code Review Action.
+              
+              **Test Scenario:** ${{ github.event.inputs.test_scenario }}
+              **Provider:** ${{ github.event.inputs.provider }}
+              
+              The test file \`test-sample.ts\` contains various code issues that should be caught by the AI reviewer:
+              
+              - 🔒 Security vulnerabilities (hardcoded secrets, SQL injection)
+              - ⚡ Performance issues (inefficient algorithms)
+              - 🔧 TypeScript best practices violations
+              - 🐛 Potential bugs (division by zero, race conditions)
+              - 📝 Code quality issues (magic numbers, poor error handling)
+              
+              Expected AI feedback should cover these areas based on the selected scenario.
+              `
+            });
+            
+            console.log('Created PR:', pr.number);
+            return { pr_number: pr.number };
+
+  test-basic-review:
+    name: Test Basic Review
+    runs-on: ubuntu-latest
+    needs: [create-test-pr]
+    if: ${{ always() && (github.event.inputs.create_pr != 'true' || needs.create-test-pr.result == 'success') }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build action
+        run: npm run build
+
+      - name: Test Basic AI Review
+        uses: ./
+        with:
+          provider: ${{ github.event.inputs.provider || 'gemini' }}
+          api_key: ${{ secrets.GEMINI_API_KEY }}
+          review_level: 'diff'
+          include_globs: '*.ts,src/**/*.ts'
+          exclude_globs: '**/*.test.ts,**/*.spec.ts,**/node_modules/**'
+          max_chunk_lines: 300
+          rules: |
+            Focus on code quality and best practices
+            Check for potential bugs and logic errors
+            Suggest improvements for readability
+          pr_number: ${{ needs.create-test-pr.outputs.pr_number || '1' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  test-security-review:
+    name: Test Security-Focused Review
+    runs-on: ubuntu-latest
+    needs: [create-test-pr]
+    if: ${{ always() && github.event.inputs.test_scenario == 'security-focused' }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build action
+        run: npm run build
+
+      - name: Test Security-Focused Review
+        uses: ./
+        with:
+          provider: ${{ github.event.inputs.provider || 'gemini' }}
+          api_key: ${{ secrets.GEMINI_API_KEY }}
+          review_level: 'file'
+          include_globs: '*.ts,src/**/*.ts'
+          exclude_globs: '**/*.test.ts,**/*.spec.ts'
+          max_chunk_lines: 400
+          rules: |
+            CRITICAL: Check for hardcoded secrets and API keys
+            CRITICAL: Look for SQL injection vulnerabilities
+            CRITICAL: Verify input validation and sanitization
+            IMPORTANT: Check for XSS vulnerabilities
+            IMPORTANT: Ensure proper authentication checks
+            MODERATE: Look for insecure cryptographic practices
+          pr_number: ${{ needs.create-test-pr.outputs.pr_number || '1' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  test-performance-review:
+    name: Test Performance-Focused Review
+    runs-on: ubuntu-latest
+    needs: [create-test-pr]
+    if: ${{ always() && github.event.inputs.test_scenario == 'performance-focused' }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build action
+        run: npm run build
+
+      - name: Test Performance-Focused Review
+        uses: ./
+        with:
+          provider: ${{ github.event.inputs.provider || 'gemini' }}
+          api_key: ${{ secrets.GEMINI_API_KEY }}
+          review_level: 'file'
+          include_globs: '*.ts,src/**/*.ts'
+          max_chunk_lines: 500
+          rules: |
+            Identify inefficient algorithms and data structures
+            Look for potential memory leaks
+            Check for unnecessary synchronous operations
+            Suggest optimizations for loops and iterations
+            Verify proper resource cleanup
+            Look for race conditions in async code
+          pr_number: ${{ needs.create-test-pr.outputs.pr_number || '1' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  test-typescript-review:
+    name: Test TypeScript-Focused Review
+    runs-on: ubuntu-latest
+    needs: [create-test-pr]
+    if: ${{ always() && github.event.inputs.test_scenario == 'typescript-focused' }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build action
+        run: npm run build
+
+      - name: Test TypeScript-Focused Review
+        uses: ./
+        with:
+          provider: ${{ github.event.inputs.provider || 'gemini' }}
+          api_key: ${{ secrets.GEMINI_API_KEY }}
+          review_level: 'file'
+          include_globs: '*.ts,src/**/*.ts'
+          max_chunk_lines: 400
+          rules: |
+            Enforce strict TypeScript best practices
+            Avoid 'any' type usage - suggest proper types
+            Check for proper interface design and segregation
+            Ensure proper error handling with typed errors
+            Verify proper async/await usage
+            Check for proper generic type usage
+            Suggest better type definitions
+          pr_number: ${{ needs.create-test-pr.outputs.pr_number || '1' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  cleanup-test-pr:
+    name: Cleanup Test PR
+    runs-on: ubuntu-latest
+    needs: [create-test-pr, test-basic-review, test-security-review, test-performance-review, test-typescript-review]
+    if: ${{ always() && github.event.inputs.create_pr == 'true' && needs.create-test-pr.outputs.pr_number }}
+    
+    steps:
+      - name: Close Test PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ needs.create-test-pr.outputs.pr_number }};
+            
+            // Add a comment to the PR
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: `
+              ## 🧪 Test Completed
+              
+              The AI Code Review Action test has been completed successfully!
+              
+              **Test Results:**
+              - ✅ Basic Review: ${{ needs.test-basic-review.result }}
+              - ✅ Security Review: ${{ needs.test-security-review.result }}
+              - ✅ Performance Review: ${{ needs.test-performance-review.result }}
+              - ✅ TypeScript Review: ${{ needs.test-typescript-review.result }}
+              
+              This PR will be automatically closed in 5 minutes to keep the repository clean.
+              `
+            });
+            
+            // Wait 5 minutes then close the PR
+            setTimeout(async () => {
+              await github.rest.pulls.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                state: 'closed'
+              });
+              
+              console.log(`Closed test PR #${prNumber}`);
+            }, 5 * 60 * 1000); // 5 minutes

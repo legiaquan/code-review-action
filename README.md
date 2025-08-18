@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: AI Code Review
-        uses: your-username/ai-code-review-action@v1
+        uses: legiaquan/code-review-action@v1
         with:
           provider: 'gemini'
           api_key: ${{ secrets.GEMINI_API_KEY }}
@@ -63,7 +63,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: AI Code Review
-        uses: your-username/ai-code-review-action@v1
+        uses: legiaquan/code-review-action@v1
         with:
           provider: 'gemini'
           api_key: ${{ secrets.GEMINI_API_KEY }}
@@ -303,7 +303,7 @@ jobs:
   review:
     runs-on: ubuntu-latest
     steps:
-      - uses: your-username/ai-code-review-action@v1
+      - uses: legiaquan/code-review-action@v1
         with:
           provider: 'gemini'
           api_key: ${{ secrets.GEMINI_API_KEY }}
@@ -329,7 +329,7 @@ jobs:
   review:
     runs-on: ubuntu-latest
     steps:
-      - uses: your-username/ai-code-review-action@v1
+      - uses: legiaquan/code-review-action@v1
         with:
           provider: ${{ github.event.inputs.provider }}
           api_key: ${{ secrets.GEMINI_API_KEY }}
@@ -346,7 +346,7 @@ jobs:
   gemini-review:
     runs-on: ubuntu-latest
     steps:
-      - uses: your-username/ai-code-review-action@v1
+      - uses: legiaquan/code-review-action@v1
         with:
           provider: 'gemini'
           api_key: ${{ secrets.GEMINI_API_KEY }}
@@ -354,7 +354,7 @@ jobs:
   openai-review:
     runs-on: ubuntu-latest
     steps:
-      - uses: your-username/ai-code-review-action@v1
+      - uses: legiaquan/code-review-action@v1
         with:
           provider: 'openai'
           api_key: ${{ secrets.OPENAI_API_KEY }}

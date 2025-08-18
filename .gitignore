@@ -71,7 +71,7 @@ jspm_packages/
 
 # Nuxt.js build / generate output
 .nuxt
-dist
+# dist - Keep this for GitHub Actions
 
 # Gatsby files
 .cache/
@@ -111,7 +111,7 @@ junit.xml
 
 # Build outputs
 lib/
-dist/
+# dist/ - Keep this for GitHub Actions
 
 # Package files
 *.tgz

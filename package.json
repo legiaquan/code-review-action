@@ -8,9 +8,11 @@
     "package": "npm run build && ncc build dist/index.js -o dist --source-map --license licenses.txt",
     "test": "jest",
     "test:watch": "jest --watch",
+    "test:local": "node scripts/test-local.js",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
-    "format": "prettier --write src/**/*.ts"
+    "format": "prettier --write src/**/*.ts",
+    "ci": "npm run lint && npm test && npm run build && npm run package"
   },
   "repository": {
     "type": "git",
