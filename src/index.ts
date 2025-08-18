@@ -90,7 +90,7 @@ class AICodeReview {
       // Validate and filter text files
       const validFiles = changedFiles.filter(file => {
         if (!FileUtils.validateFileChange(file)) {
-          core.warning(`Invalid file change object for: ${file.filename}`);
+          core.warning(`Invalid file change object for: ${(file as any)?.filename || 'unknown'}`);
           return false;
         }
         

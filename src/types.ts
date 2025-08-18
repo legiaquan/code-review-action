@@ -8,8 +8,8 @@ export interface ReviewParams {
 
 export interface ReviewResult {
   comment: string;
-  tokensUsed?: number;
-  costUSD?: number;
+  tokensUsed?: number | undefined;
+  costUSD?: number | undefined;
   provider?: string;
 }
 
@@ -68,7 +68,7 @@ export interface FileChange {
   additions: number;
   deletions: number;
   changes: number;
-  patch?: string;
+  patch?: string | undefined;
 }
 
 export interface ChunkedDiff {

@@ -73,8 +73,9 @@ export class OpenAIProvider extends BaseProvider {
 
       // Handle specific OpenAI API errors
       if (error && typeof error === 'object' && 'status' in error) {
-        const status = (error as any).status;
-        const message = (error as any).message || 'Unknown OpenAI API error';
+        const errorObj = error as { status?: number; message?: string };
+        const status = errorObj.status;
+        const message = errorObj.message || 'Unknown OpenAI API error';
         
         throw new ProviderError(
           `OpenAI API error: ${message}`,

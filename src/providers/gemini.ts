@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
+import { GoogleGenerativeAI, GenerativeModel, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 import { BaseProvider, ReviewParams, ReviewResult, ProviderError } from '../types';
 
 export class GeminiProvider extends BaseProvider {
@@ -21,20 +21,20 @@ export class GeminiProvider extends BaseProvider {
         },
         safetySettings: [
           {
-            category: 'HARM_CATEGORY_HATE_SPEECH',
-            threshold: 'BLOCK_NONE',
+            category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+            threshold: HarmBlockThreshold.BLOCK_NONE,
           },
           {
-            category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-            threshold: 'BLOCK_NONE',
+            category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+            threshold: HarmBlockThreshold.BLOCK_NONE,
           },
           {
-            category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-            threshold: 'BLOCK_NONE',
+            category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+            threshold: HarmBlockThreshold.BLOCK_NONE,
           },
           {
-            category: 'HARM_CATEGORY_HARASSMENT',
-            threshold: 'BLOCK_NONE',
+            category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+            threshold: HarmBlockThreshold.BLOCK_NONE,
           },
         ],
       });
@@ -87,8 +87,9 @@ export class GeminiProvider extends BaseProvider {
 
       // Handle specific Gemini API errors
       if (error && typeof error === 'object' && 'status' in error) {
-        const status = (error as any).status;
-        const message = (error as any).message || 'Unknown Gemini API error';
+        const errorObj = error as { status?: number; message?: string };
+        const status = errorObj.status;
+        const message = errorObj.message || 'Unknown Gemini API error';
         
         throw new ProviderError(
           `Gemini API error: ${message}`,

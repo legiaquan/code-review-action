@@ -52,7 +52,7 @@ describe('FileUtils', () => {
     });
 
     it('should exclude files matching exclude patterns', () => {
-      const result = FileUtils.filterFiles(mockFiles, ['**/*'], ['**/dist/**', '**/*.lock']);
+      const result = FileUtils.filterFiles(mockFiles, ['**/*'], ['**/dist/**', '**/*.lock', '**/package-lock.json']);
       expect(result).toHaveLength(2);
       expect(result.map(f => f.filename)).toEqual(['src/index.ts', 'src/utils.js']);
     });

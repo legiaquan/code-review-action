@@ -4,7 +4,6 @@ import { ConfigError } from '../src/types';
 
 // Mock @actions/core
 const mockGetInput = core.getInput as jest.MockedFunction<typeof core.getInput>;
-const mockInfo = core.info as jest.MockedFunction<typeof core.info>;
 const mockWarning = core.warning as jest.MockedFunction<typeof core.warning>;
 
 describe('Config', () => {

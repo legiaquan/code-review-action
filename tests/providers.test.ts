@@ -45,7 +45,9 @@ describe('ProviderFactory', () => {
 
   describe('registerProvider', () => {
     class TestProvider {
-      constructor(private apiKey: string) {}
+      constructor(_apiKey: string) {
+        // API key stored but not used in test
+      }
       
       async review() {
         return {
@@ -64,7 +66,9 @@ describe('ProviderFactory', () => {
 
     it('should override existing provider', () => {
       class NewGeminiProvider {
-        constructor(private apiKey: string) {}
+        constructor(_apiKey: string) {
+          // API key stored but not used in test
+        }
         
         async review() {
           return {
