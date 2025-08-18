@@ -1,0 +1,76 @@
+# Example workflow showing how to use the AI Code Review Action
+# This file is for demonstration purposes and is not run automatically
+
+name: Example AI Code Review
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Pull Request number to review'
+        required: true
+        type: string
+
+jobs:
+  # Basic review with Gemini
+  gemini-review:
+    name: Gemini Code Review
+    runs-on: ubuntu-latest
+    steps:
+      - name: AI Code Review with Gemini
+        uses: ./
+        with:
+          provider: 'gemini'
+          api_key: ${{ secrets.GEMINI_API_KEY }}
+          review_level: 'diff'
+          pr_number: ${{ github.event.inputs.pr_number }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Advanced review with OpenAI and custom rules
+  openai-review:
+    name: OpenAI Code Review
+    runs-on: ubuntu-latest
+    steps:
+      - name: AI Code Review with OpenAI
+        uses: ./
+        with:
+          provider: 'openai'
+          api_key: ${{ secrets.OPENAI_API_KEY }}
+          review_level: 'file'
+          include_globs: 'src/**/*.ts,lib/**/*.js'
+          exclude_globs: '**/*.test.ts,**/*.spec.ts,**/*.d.ts'
+          max_chunk_lines: 300
+          rules: |
+            Focus on security vulnerabilities
+            Check for performance bottlenecks
+            Ensure TypeScript best practices
+            Verify proper error handling
+            Look for code duplication
+          pr_number: ${{ github.event.inputs.pr_number }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Security-focused review
+  security-review:
+    name: Security-Focused Review
+    runs-on: ubuntu-latest
+    steps:
+      - name: Security Code Review
+        uses: ./
+        with:
+          provider: 'gemini'
+          api_key: ${{ secrets.GEMINI_API_KEY }}
+          include_globs: 'src/**/*.ts,src/**/*.js'
+          exclude_globs: '**/*.test.ts,**/node_modules/**'
+          rules: |
+            Check for SQL injection vulnerabilities
+            Verify input validation and sanitization
+            Look for hardcoded secrets or API keys
+            Ensure proper authentication checks
+            Check for XSS vulnerabilities
+            Verify CSRF protection
+            Look for insecure cryptographic practices
+          pr_number: ${{ github.event.inputs.pr_number }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

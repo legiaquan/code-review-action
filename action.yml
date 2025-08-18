@@ -1,0 +1,45 @@
+name: 'AI Code Review'
+description: 'AI-powered code review with pluggable providers (Gemini, OpenAI, etc.)'
+author: 'Your Name'
+branding:
+  icon: 'eye'
+  color: 'blue'
+
+inputs:
+  provider:
+    description: 'AI provider to use (gemini, openai)'
+    required: false
+    default: 'gemini'
+  
+  api_key:
+    description: 'API key for the selected provider (e.g., GEMINI_API_KEY, OPENAI_API_KEY)'
+    required: true
+  
+  review_level:
+    description: 'Review level: diff (only changes), file (full files), full (all files)'
+    required: false
+    default: 'diff'
+  
+  include_globs:
+    description: 'Glob patterns for files to include (comma-separated)'
+    required: false
+    default: 'src/**/*.ts,src/**/*.js,lib/**/*.ts,lib/**/*.js'
+  
+  exclude_globs:
+    description: 'Glob patterns for files to exclude (comma-separated)'
+    required: false
+    default: '**/*.lock,**/dist/**,**/node_modules/**,**/*.min.js'
+  
+  max_chunk_lines:
+    description: 'Maximum lines per chunk for AI review'
+    required: false
+    default: '400'
+  
+  rules:
+    description: 'Custom review rules (comma-separated or newline-separated)'
+    required: false
+    default: ''
+
+runs:
+  using: 'node20'
+  main: 'dist/index.js'

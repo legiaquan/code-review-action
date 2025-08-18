@@ -1,0 +1,123 @@
+name: AI Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'src/**'
+      - 'lib/**'
+      - '*.ts'
+      - '*.js'
+      - 'package.json'
+      - 'tsconfig.json'
+
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Pull Request number to review'
+        required: true
+        type: string
+      provider:
+        description: 'AI provider to use'
+        required: false
+        default: 'gemini'
+        type: choice
+        options:
+          - 'gemini'
+          - 'openai'
+
+jobs:
+  ai-code-review:
+    name: AI Code Review
+    runs-on: ubuntu-latest
+    
+    # Skip if PR is from a fork (to protect secrets)
+    if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build action
+        run: npm run build
+
+      - name: Run AI Code Review
+        uses: ./
+        with:
+          provider: ${{ github.event.inputs.provider || 'gemini' }}
+          api_key: ${{ secrets.GEMINI_API_KEY }}
+          review_level: 'diff'
+          include_globs: 'src/**/*.ts,src/**/*.js,lib/**/*.ts,lib/**/*.js'
+          exclude_globs: '**/*.test.ts,**/*.spec.ts,**/*.d.ts,**/node_modules/**,**/dist/**'
+          max_chunk_lines: 400
+          rules: |
+            Focus on TypeScript best practices
+            Check for potential security vulnerabilities  
+            Look for performance issues
+            Ensure proper error handling
+            Verify code maintainability
+          pr_number: ${{ github.event.inputs.pr_number }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  test-action:
+    name: Test Action
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build action
+        run: npm run build
+
+      - name: Package action
+        run: npm run package
+
+      - name: Test action configuration
+        run: |
+          # Validate action.yml
+          if [ ! -f "action.yml" ]; then
+            echo "❌ action.yml not found"
+            exit 1
+          fi
+          
+          # Check if dist folder exists after build
+          if [ ! -d "dist" ]; then
+            echo "❌ dist folder not found after build"
+            exit 1
+          fi
+          
+          # Check if main entry point exists
+          if [ ! -f "dist/index.js" ]; then
+            echo "❌ dist/index.js not found"
+            exit 1
+          fi
+          
+          echo "✅ Action configuration is valid"
