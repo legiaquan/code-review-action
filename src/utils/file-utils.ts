@@ -214,7 +214,7 @@ export class FileUtils {
   /**
    * Validate file change object
    */
-  static validateFileChange(file: any): file is FileChange {
+  static validateFileChange(file: unknown): file is FileChange {
     if (!file || typeof file !== 'object') {
       return false;
     }
@@ -268,6 +268,7 @@ export class FileUtils {
    */
   static sanitizeFilename(filename: string): string {
     // Remove any potentially dangerous characters
+    // eslint-disable-next-line no-control-regex
     return filename.replace(/[<>:"|?*\x00-\x1f]/g, '_');
   }
 

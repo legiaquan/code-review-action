@@ -67,9 +67,11 @@ export abstract class BaseProvider implements AIProvider {
         const jitter = Math.random() * 0.1 * delay; // 10% jitter
         const totalDelay = Math.min(delay + jitter, 30000); // Max 30 seconds
 
+        // eslint-disable-next-line no-console
         console.log(
           `${operationName} failed (attempt ${attempt}/${maxRetries + 1}), retrying in ${Math.round(totalDelay)}ms...`,
         );
+        // eslint-disable-next-line no-console
         console.log(`Error: ${lastError.message}`);
 
         await this.sleep(totalDelay);
@@ -82,7 +84,7 @@ export abstract class BaseProvider implements AIProvider {
   /**
    * Check if an error is retryable
    */
-  protected isRetryableError(error: any): boolean {
+  protected isRetryableError(error: unknown): boolean {
     if (error instanceof ProviderError) {
       // Retry on rate limit, quota, and temporary server errors
       const retryableStatusCodes = [429, 500, 502, 503, 504];
