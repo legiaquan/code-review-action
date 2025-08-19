@@ -101,11 +101,3 @@ export async function main(): Promise<void> {
   const review = new AICodeReview();
   await review.run();
 }
-
-// Run the action if this is the main module
-if (require.main === module) {
-  main().catch(error => {
-    core.setFailed(`Action failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    process.exit(1);
-  });
-}
