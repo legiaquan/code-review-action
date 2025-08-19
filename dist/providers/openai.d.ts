@@ -1,4 +1,4 @@
-import { BaseProvider, ReviewParams, ReviewResult } from '@types';
+import { BaseProvider, ReviewParams, ReviewResult } from '../types';
 export declare class OpenAIProvider extends BaseProvider {
     protected model: string;
     private client;

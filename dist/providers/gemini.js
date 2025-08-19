@@ -2,8 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GeminiProvider = void 0;
 const generative_ai_1 = require("@google/generative-ai");
-const _types_1 = require("@types");
-class GeminiProvider extends _types_1.BaseProvider {
+const types_1 = require("../types");
+class GeminiProvider extends types_1.BaseProvider {
     model = 'gemini-1.5-flash';
     genAI;
     generativeModel;
@@ -40,7 +40,7 @@ class GeminiProvider extends _types_1.BaseProvider {
             });
         }
         catch (error) {
-            throw new _types_1.ProviderError(`Failed to initialize Gemini provider: ${error instanceof Error ? error.message : 'Unknown error'}`, 'gemini', undefined, error instanceof Error ? error : undefined);
+            throw new types_1.ProviderError(`Failed to initialize Gemini provider: ${error instanceof Error ? error.message : 'Unknown error'}`, 'gemini', undefined, error instanceof Error ? error : undefined);
         }
     }
     async review(params, maxRetries = 3, retryDelay = 1000) {
@@ -49,11 +49,11 @@ class GeminiProvider extends _types_1.BaseProvider {
             const result = await this.generativeModel.generateContent(prompt);
             const response = await result.response;
             if (!response) {
-                throw new _types_1.ProviderError('No response received from Gemini', 'gemini');
+                throw new types_1.ProviderError('No response received from Gemini', 'gemini');
             }
             const text = response.text();
             if (!text || text.trim() === '') {
-                throw new _types_1.ProviderError('Empty response received from Gemini', 'gemini');
+                throw new types_1.ProviderError('Empty response received from Gemini', 'gemini');
             }
             // Extract token usage if available
             const tokensUsed = response.usageMetadata?.totalTokenCount;

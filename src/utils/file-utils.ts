@@ -225,7 +225,7 @@ export class FileUtils {
     const fileObj = file as Record<string, any>;
     return (
       requiredFields.every(field => field in fileObj) &&
-      validStatuses.includes(fileObj.status) &&
+      validStatuses.includes(fileObj.status as string) &&
       typeof fileObj.filename === 'string' &&
       typeof fileObj.additions === 'number' &&
       typeof fileObj.deletions === 'number' &&

@@ -1,7 +1,7 @@
 import { ProviderFactory } from '../src/providers';
 import { GeminiProvider } from '../src/providers/gemini';
 import { OpenAIProvider } from '../src/providers/openai';
-import { ProviderError } from '../src/types/index';
+import { ProviderError, ProviderType } from '../src/types/index';
 
 describe('ProviderFactory', () => {
   describe('createProvider', () => {
@@ -45,34 +45,40 @@ describe('ProviderFactory', () => {
 
   describe('registerProvider', () => {
     class TestProvider {
-      constructor(_apiKey: string) {
-        // API key stored but not used in test
+      constructor(apiKey: string) {
+        // Store API key to avoid unused parameter warning
+        this.apiKey = apiKey;
       }
+      
+      private apiKey: string;
       
       async review() {
         return {
-          comment: 'Test review',
+          comment: `Test review with key: ${this.apiKey.substring(0, 4)}...`,
           provider: 'test',
         };
       }
     }
 
     it('should register new provider', () => {
-      ProviderFactory.registerProvider('test' as any, TestProvider as any);
+      ProviderFactory.registerProvider('test' as ProviderType, TestProvider as any);
       
-      const provider = ProviderFactory.createProvider('test' as any, 'test-key');
+      const provider = ProviderFactory.createProvider('test' as ProviderType, 'test-key');
       expect(provider).toBeInstanceOf(TestProvider);
     });
 
     it('should override existing provider', () => {
       class NewGeminiProvider {
-        constructor(_apiKey: string) {
-          // API key stored but not used in test
+        constructor(apiKey: string) {
+          // Store API key to avoid unused parameter warning
+          this.apiKey = apiKey;
         }
+        
+        private apiKey: string;
         
         async review() {
           return {
-            comment: 'New Gemini review',
+            comment: `New Gemini review with key: ${this.apiKey.substring(0, 4)}...`,
             provider: 'new-gemini',
           };
         }
@@ -100,7 +106,7 @@ describe('BaseProvider', () => {
     
     // Expose protected method for testing
     public testBuildPrompt(params: any) {
-      return this.buildPrompt(params);
+      return this.buildPrompt(params as any);
     }
   }
 

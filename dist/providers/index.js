@@ -51,5 +51,5 @@ var gemini_2 = require("./gemini");
 Object.defineProperty(exports, "GeminiProvider", { enumerable: true, get: function () { return gemini_2.GeminiProvider; } });
 var openai_2 = require("./openai");
 Object.defineProperty(exports, "OpenAIProvider", { enumerable: true, get: function () { return openai_2.OpenAIProvider; } });
-__exportStar(require("@types"), exports);
+__exportStar(require("../types"), exports);
 //# sourceMappingURL=index.js.map

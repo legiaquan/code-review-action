@@ -1,4 +1,4 @@
-import { BaseProvider, ReviewParams, ReviewResult } from '@types';
+import { BaseProvider, ReviewParams, ReviewResult } from '../types';
 export declare class GeminiProvider extends BaseProvider {
     protected model: string;
     private genAI;

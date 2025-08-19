@@ -5,8 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OpenAIProvider = void 0;
 const openai_1 = __importDefault(require("openai"));
-const _types_1 = require("@types");
-class OpenAIProvider extends _types_1.BaseProvider {
+const types_1 = require("../types");
+class OpenAIProvider extends types_1.BaseProvider {
     model = 'gpt-4-turbo-preview';
     client;
     constructor(apiKey) {
@@ -17,7 +17,7 @@ class OpenAIProvider extends _types_1.BaseProvider {
             });
         }
         catch (error) {
-            throw new _types_1.ProviderError(`Failed to initialize OpenAI provider: ${error instanceof Error ? error.message : 'Unknown error'}`, 'openai', undefined, error instanceof Error ? error : undefined);
+            throw new types_1.ProviderError(`Failed to initialize OpenAI provider: ${error instanceof Error ? error.message : 'Unknown error'}`, 'openai', undefined, error instanceof Error ? error : undefined);
         }
     }
     async review(params, maxRetries = 3, retryDelay = 1000) {
@@ -43,7 +43,7 @@ class OpenAIProvider extends _types_1.BaseProvider {
             });
             const response = completion.choices[0]?.message?.content;
             if (!response || response.trim() === '') {
-                throw new _types_1.ProviderError('Empty response received from OpenAI', 'openai');
+                throw new types_1.ProviderError('Empty response received from OpenAI', 'openai');
             }
             // Extract usage information
             const tokensUsed = completion.usage?.total_tokens;
