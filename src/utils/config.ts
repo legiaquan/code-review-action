@@ -1,5 +1,5 @@
 import * as core from '@actions/core';
-import { ActionInputs, ProviderType, ReviewLevel, ConfigError } from './types';
+import { ActionInputs, ProviderType, ReviewLevel, ConfigError } from '../types';
 import { FileUtils } from './file-utils';
 
 export class Config {

@@ -1,5 +1,5 @@
 import { minimatch } from 'minimatch';
-import { FileChange, ChunkedDiff, DiffChunk } from './types';
+import { FileChange, ChunkedDiff, DiffChunk } from '../types';
 
 export class FileUtils {
   /**

@@ -20,7 +20,17 @@
     "noImplicitOverride": false,
     "noPropertyAccessFromIndexSignature": false,
     "resolveJsonModule": true,
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["./*"],
+      "@core/*": ["./core/*"],
+      "@services/*": ["./services/*"],
+      "@github/*": ["./github/*"],
+      "@utils/*": ["./utils/*"],
+      "@types": ["./types"],
+      "@providers/*": ["./providers/*"]
+    }
   },
   "include": [
     "src/**/*"

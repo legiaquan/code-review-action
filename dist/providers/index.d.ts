@@ -7,5 +7,5 @@ export declare class ProviderFactory {
 }
 export { GeminiProvider } from './gemini';
 export { OpenAIProvider } from './openai';
-export * from '../types';
+export * from '@types';
 //# sourceMappingURL=index.d.ts.map

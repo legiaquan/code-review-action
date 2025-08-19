@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { BaseProvider, ReviewParams, ReviewResult, ProviderError } from '../types';
+import { BaseProvider, ReviewParams, ReviewResult, ProviderError } from '@types';
 
 export class OpenAIProvider extends BaseProvider {
   protected model = 'gpt-4-turbo-preview';
