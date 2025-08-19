@@ -120,11 +120,11 @@ export class CommentBuilder {
    * Build summary section of the review comment
    */
   private buildSummarySection(
-    provider: string, 
-    files: FileChange[], 
-    reviewedFilesCount: number, 
-    totals: any, 
-    results: ReviewResult[]
+    provider: string,
+    files: FileChange[],
+    reviewedFilesCount: number,
+    totals: any,
+    results: ReviewResult[],
   ): string {
     let section = `### 📊 Review Summary\n`;
     section += `| Metric | Value |\n`;
@@ -195,12 +195,16 @@ export class CommentBuilder {
   /**
    * Build technical details section
    */
-  private buildTechnicalDetailsSection(results: ReviewResult[], summary: any, provider: string): string {
+  private buildTechnicalDetailsSection(
+    results: ReviewResult[],
+    summary: any,
+    provider: string,
+  ): string {
     const totalTokens = results.reduce((sum, r) => sum + (r.tokensUsed || 0), 0);
     const totalCost = results.reduce((sum, r) => sum + (r.costUSD || 0), 0);
 
     let section = `\n<details>\n<summary>🔢 Technical Details</summary>\n\n`;
-    
+
     // File status breakdown
     section += `**File Status Breakdown:**\n`;
     Object.entries(summary).forEach(([status, count]) => {

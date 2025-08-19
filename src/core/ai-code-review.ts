@@ -18,11 +18,11 @@ export class AICodeReview {
   constructor() {
     // Load configuration
     this.config = Config.loadFromInputs();
-    
+
     // Get repository info and PR number
     const repoInfo = Config.getRepoInfo();
     this.prNumber = Config.getPullRequestNumber();
-    
+
     // Initialize services
     this.githubClient = new GitHubClient(repoInfo);
     this.commentBuilder = new CommentBuilder(this.config);
@@ -32,7 +32,7 @@ export class AICodeReview {
       this.commentBuilder,
       this.errorHandler,
       this.githubClient,
-      this.prNumber
+      this.prNumber,
     );
   }
 
@@ -86,7 +86,9 @@ export class AICodeReview {
       await this.githubClient.createComment(this.prNumber, comment);
       core.info('✅ Review comment posted successfully');
     } catch (error) {
-      core.error(`Failed to post review comment: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      core.error(
+        `Failed to post review comment: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
       throw error;
     }
   }

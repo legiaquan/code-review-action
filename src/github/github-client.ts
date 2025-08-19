@@ -63,7 +63,9 @@ export class GitHubClient {
     // First, validate token permissions
     const hasPermissions = await this.validatePermissions();
     if (!hasPermissions) {
-      core.warning('⚠️ GitHub token may not have sufficient permissions. Proceeding with fallback API...');
+      core.warning(
+        '⚠️ GitHub token may not have sufficient permissions. Proceeding with fallback API...',
+      );
     }
 
     // Try Octokit first
@@ -80,32 +82,33 @@ export class GitHubClient {
       core.info('✅ Comment posted successfully via Octokit');
       return {
         id: response.data.id,
-        html_url: response.data.html_url
+        html_url: response.data.html_url,
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       core.warning(`Octokit failed: ${errorMessage}`);
-      
+
       // Check if it's a permission issue
       if (this.isPermissionError(errorMessage)) {
         core.info('🔄 Trying fallback GitHub API...');
-        
+
         try {
           const response = await this.retryOperation(async () => {
             return await this.createCommentWithFetch(issueNumber, body);
           });
-          
+
           core.info('✅ Comment posted successfully via fallback API');
           return response;
         } catch (fallbackError) {
-          const fallbackMessage = fallbackError instanceof Error ? fallbackError.message : 'Unknown error';
+          const fallbackMessage =
+            fallbackError instanceof Error ? fallbackError.message : 'Unknown error';
           core.error(`Fallback API also failed: ${fallbackMessage}`);
-          
+
           // Provide detailed troubleshooting information
           throw new Error(this.buildPermissionErrorMessage(errorMessage, fallbackMessage));
         }
       }
-      
+
       // If it's not a permission error, throw immediately
       throw new Error(`Failed to create comment: ${errorMessage}`);
     }
@@ -114,7 +117,10 @@ export class GitHubClient {
   /**
    * Create comment using direct GitHub REST API
    */
-  private async createCommentWithFetch(issueNumber: number, body: string): Promise<CommentResponse> {
+  private async createCommentWithFetch(
+    issueNumber: number,
+    body: string,
+  ): Promise<CommentResponse> {
     const token = Config.getGitHubToken();
     const url = `https://api.github.com/repos/${this.repoInfo.owner}/${this.repoInfo.repo}/issues/${issueNumber}/comments`;
 
@@ -124,23 +130,23 @@ export class GitHubClient {
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Accept': 'application/vnd.github+json',
-        'Authorization': `Bearer ${token}`,
+        Accept: 'application/vnd.github+json',
+        Authorization: `Bearer ${token}`,
         'X-GitHub-Api-Version': '2022-11-28',
         'Content-Type': 'application/json',
-        'User-Agent': 'AI-Code-Review-Action/1.0'
+        'User-Agent': 'AI-Code-Review-Action/1.0',
       },
-      body: JSON.stringify({ body })
+      body: JSON.stringify({ body }),
     });
 
     if (!response.ok) {
       await this.handleApiError(response);
     }
 
-    const result = await response.json() as CommentResponse;
+    const result = (await response.json()) as CommentResponse;
     core.info(`💬 Comment created successfully with ID: ${result.id}`);
     core.debug(`Comment URL: ${result.html_url}`);
-    
+
     return result;
   }
 
@@ -150,7 +156,7 @@ export class GitHubClient {
   private async handleApiError(response: Response): Promise<never> {
     let errorText: string;
     let errorData: any = {};
-    
+
     try {
       errorText = await response.text();
       errorData = JSON.parse(errorText);
@@ -164,14 +170,20 @@ export class GitHubClient {
     // Provide specific error messages based on status code
     switch (response.status) {
       case 401:
-        throw new Error(`Authentication failed: Invalid or expired GitHub token. Please check your GITHUB_TOKEN secret.`);
+        throw new Error(
+          `Authentication failed: Invalid or expired GitHub token. Please check your GITHUB_TOKEN secret.`,
+        );
       case 403:
         if (errorData.message?.includes('Resource not accessible by integration')) {
-          throw new Error(`Permission denied: The GitHub token doesn't have permission to create comments. Required permissions: 'issues: write' or 'pull-requests: write'`);
+          throw new Error(
+            `Permission denied: The GitHub token doesn't have permission to create comments. Required permissions: 'issues: write' or 'pull-requests: write'`,
+          );
         }
         throw new Error(`Access forbidden: ${errorData.message || 'Insufficient permissions'}`);
       case 404:
-        throw new Error(`Resource not found: Repository ${this.repoInfo.owner}/${this.repoInfo.repo} or issue doesn't exist or token lacks access`);
+        throw new Error(
+          `Resource not found: Repository ${this.repoInfo.owner}/${this.repoInfo.repo} or issue doesn't exist or token lacks access`,
+        );
       case 422:
         throw new Error(`Validation failed: ${errorData.message || 'Invalid request data'}`);
       default:
@@ -191,11 +203,11 @@ export class GitHubClient {
       'API rate limit exceeded',
       '401',
       '403',
-      '404'
+      '404',
     ];
-    
-    return permissionIndicators.some(indicator => 
-      errorMessage.toLowerCase().includes(indicator.toLowerCase())
+
+    return permissionIndicators.some(indicator =>
+      errorMessage.toLowerCase().includes(indicator.toLowerCase()),
     );
   }
 
@@ -211,11 +223,11 @@ export class GitHubClient {
       'Validation failed',
       '401',
       '404',
-      '422'
+      '422',
     ];
-    
-    return nonRetryableIndicators.some(indicator => 
-      errorMessage.toLowerCase().includes(indicator.toLowerCase())
+
+    return nonRetryableIndicators.some(indicator =>
+      errorMessage.toLowerCase().includes(indicator.toLowerCase()),
     );
   }
 
@@ -223,9 +235,9 @@ export class GitHubClient {
    * Retry an operation with exponential backoff
    */
   private async retryOperation<T>(
-    operation: () => Promise<T>, 
-    maxRetries: number = 3, 
-    baseDelay: number = 1000
+    operation: () => Promise<T>,
+    maxRetries: number = 3,
+    baseDelay: number = 1000,
   ): Promise<T> {
     let lastError: Error;
 
@@ -234,7 +246,7 @@ export class GitHubClient {
         return await operation();
       } catch (error) {
         lastError = error instanceof Error ? error : new Error('Unknown error');
-        
+
         if (attempt === maxRetries) {
           throw lastError;
         }
@@ -245,7 +257,9 @@ export class GitHubClient {
         }
 
         const delay = baseDelay * Math.pow(2, attempt - 1); // Exponential backoff
-        core.warning(`Attempt ${attempt}/${maxRetries} failed: ${lastError.message}. Retrying in ${delay}ms...`);
+        core.warning(
+          `Attempt ${attempt}/${maxRetries} failed: ${lastError.message}. Retrying in ${delay}ms...`,
+        );
         await this.delay(delay);
       }
     }

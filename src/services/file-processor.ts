@@ -15,7 +15,7 @@ export class FileProcessor {
     private commentBuilder: CommentBuilder,
     private errorHandler: ErrorHandler,
     private githubClient: GitHubClient,
-    private prNumber: number
+    private prNumber: number,
   ) {}
 
   /**
@@ -55,7 +55,7 @@ export class FileProcessor {
       return validFiles;
     } catch (error) {
       throw new Error(
-        `Failed to fetch changed files: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to fetch changed files: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
   }
@@ -124,10 +124,10 @@ export class FileProcessor {
    * Review a single file
    */
   private async reviewSingleFile(
-    file: FileChange, 
-    fileIndex: number, 
-    totalFiles: number, 
-    provider: any
+    file: FileChange,
+    fileIndex: number,
+    totalFiles: number,
+    provider: any,
   ): Promise<ReviewResult[]> {
     const statusEmoji = this.getStatusEmoji(file.status);
     core.info(`🔍 [${fileIndex}/${totalFiles}] Reviewing ${statusEmoji} ${file.filename}`);
@@ -171,10 +171,10 @@ export class FileProcessor {
    * Review a single chunk
    */
   private async reviewChunk(
-    file: FileChange, 
-    chunk: any, 
-    totalChunks: number, 
-    provider: any
+    file: FileChange,
+    chunk: any,
+    totalChunks: number,
+    provider: any,
   ): Promise<ReviewResult | null> {
     if (totalChunks > 1) {
       core.info(
