@@ -35,7 +35,9 @@ class BaseProvider {
                 const delay = baseDelay * Math.pow(2, attempt - 1);
                 const jitter = Math.random() * 0.1 * delay; // 10% jitter
                 const totalDelay = Math.min(delay + jitter, 30000); // Max 30 seconds
+                // eslint-disable-next-line no-console
                 console.log(`${operationName} failed (attempt ${attempt}/${maxRetries + 1}), retrying in ${Math.round(totalDelay)}ms...`);
+                // eslint-disable-next-line no-console
                 console.log(`Error: ${lastError.message}`);
                 await this.sleep(totalDelay);
             }
@@ -61,7 +63,7 @@ class BaseProvider {
                 message.includes('server error'));
         }
         // Retry on network errors
-        if (error && typeof error === 'object') {
+        if (error && typeof error === 'object' && 'message' in error) {
             const message = String(error.message || '').toLowerCase();
             return (message.includes('network') ||
                 message.includes('timeout') ||

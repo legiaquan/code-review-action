@@ -23,7 +23,7 @@ export declare class FileUtils {
     /**
      * Validate file change object
      */
-    static validateFileChange(file: any): file is FileChange;
+    static validateFileChange(file: unknown): file is FileChange;
     /**
      * Calculate total lines of changes across files
      */

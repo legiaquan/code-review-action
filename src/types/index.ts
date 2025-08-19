@@ -104,7 +104,7 @@ export abstract class BaseProvider implements AIProvider {
     }
 
     // Retry on network errors
-    if (error && typeof error === 'object') {
+    if (error && typeof error === 'object' && 'message' in error) {
       const message = String(error.message || '').toLowerCase();
       return (
         message.includes('network') ||

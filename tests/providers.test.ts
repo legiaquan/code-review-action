@@ -1,7 +1,7 @@
 import { ProviderFactory } from '../src/providers';
 import { GeminiProvider } from '../src/providers/gemini';
 import { OpenAIProvider } from '../src/providers/openai';
-import { ProviderError } from '../src/types';
+import { ProviderError } from '../src/types/index';
 
 describe('ProviderFactory', () => {
   describe('createProvider', () => {

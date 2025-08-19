@@ -194,12 +194,13 @@ class FileUtils {
         }
         const requiredFields = ['filename', 'status', 'additions', 'deletions', 'changes'];
         const validStatuses = ['added', 'modified', 'removed', 'renamed'];
-        return (requiredFields.every(field => field in file) &&
-            validStatuses.includes(file.status) &&
-            typeof file.filename === 'string' &&
-            typeof file.additions === 'number' &&
-            typeof file.deletions === 'number' &&
-            typeof file.changes === 'number');
+        const fileObj = file;
+        return (requiredFields.every(field => field in fileObj) &&
+            validStatuses.includes(fileObj.status) &&
+            typeof fileObj.filename === 'string' &&
+            typeof fileObj.additions === 'number' &&
+            typeof fileObj.deletions === 'number' &&
+            typeof fileObj.changes === 'number');
     }
     /**
      * Calculate total lines of changes across files
@@ -225,6 +226,7 @@ class FileUtils {
      */
     static sanitizeFilename(filename) {
         // Remove any potentially dangerous characters
+        // eslint-disable-next-line no-control-regex
         return filename.replace(/[<>:"|?*\x00-\x1f]/g, '_');
     }
     /**

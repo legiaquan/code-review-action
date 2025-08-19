@@ -49,4 +49,4 @@ export class ProviderFactory {
 // Export provider classes for direct use if needed
 export { GeminiProvider } from './gemini';
 export { OpenAIProvider } from './openai';
-export * from '@types';
+export * from '../types';

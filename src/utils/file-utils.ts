@@ -222,13 +222,14 @@ export class FileUtils {
     const requiredFields = ['filename', 'status', 'additions', 'deletions', 'changes'];
     const validStatuses = ['added', 'modified', 'removed', 'renamed'];
 
+    const fileObj = file as Record<string, any>;
     return (
-      requiredFields.every(field => field in file) &&
-      validStatuses.includes(file.status) &&
-      typeof file.filename === 'string' &&
-      typeof file.additions === 'number' &&
-      typeof file.deletions === 'number' &&
-      typeof file.changes === 'number'
+      requiredFields.every(field => field in fileObj) &&
+      validStatuses.includes(fileObj.status) &&
+      typeof fileObj.filename === 'string' &&
+      typeof fileObj.additions === 'number' &&
+      typeof fileObj.deletions === 'number' &&
+      typeof fileObj.changes === 'number'
     );
   }
 

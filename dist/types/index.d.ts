@@ -33,7 +33,7 @@ export declare abstract class BaseProvider implements AIProvider {
     /**
      * Check if an error is retryable
      */
-    protected isRetryableError(error: any): boolean;
+    protected isRetryableError(error: unknown): boolean;
     /**
      * Sleep utility
      */

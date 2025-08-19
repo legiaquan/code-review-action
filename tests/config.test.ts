@@ -1,6 +1,6 @@
 import * as core from '@actions/core';
-import { Config } from '../src/config';
-import { ConfigError } from '../src/types';
+import { Config } from '../src/utils/config';
+import { ConfigError } from '../src/types/index';
 
 // Mock @actions/core
 const mockGetInput = core.getInput as jest.MockedFunction<typeof core.getInput>;

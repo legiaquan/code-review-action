@@ -1,5 +1,5 @@
-import { FileUtils } from '../src/file-utils';
-import { FileChange } from '../src/types';
+import { FileUtils } from '../src/utils/file-utils';
+import { FileChange } from '../src/types/index';
 
 describe('FileUtils', () => {
   describe('filterFiles', () => {
@@ -54,12 +54,12 @@ describe('FileUtils', () => {
     it('should exclude files matching exclude patterns', () => {
       const result = FileUtils.filterFiles(mockFiles, ['**/*'], ['**/dist/**', '**/*.lock', '**/package-lock.json']);
       expect(result).toHaveLength(2);
-      expect(result.map(f => f.filename)).toEqual(['src/index.ts', 'src/utils.js']);
+      expect(result.map((f: FileChange) => f.filename)).toEqual(['src/index.ts', 'src/utils.js']);
     });
 
     it('should exclude removed files', () => {
       const result = FileUtils.filterFiles(mockFiles, ['**/*'], []);
-      expect(result.map(f => f.filename)).not.toContain('deleted-file.ts');
+      expect(result.map((f: FileChange) => f.filename)).not.toContain('deleted-file.ts');
     });
 
     it('should handle empty include patterns', () => {

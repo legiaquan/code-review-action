@@ -4,7 +4,7 @@ import {
   HarmCategory,
   HarmBlockThreshold,
 } from '@google/generative-ai';
-import { BaseProvider, ReviewParams, ReviewResult, ProviderError } from '@types';
+import { BaseProvider, ReviewParams, ReviewResult, ProviderError } from '../types';
 
 export class GeminiProvider extends BaseProvider {
   protected model = 'gemini-1.5-flash';
