@@ -22,77 +22,61 @@ export class OpenAIProvider extends BaseProvider {
     }
   }
 
-  async review(params: ReviewParams): Promise<ReviewResult> {
-    try {
-      const prompt = this.buildPrompt(params);
+  async review(
+    params: ReviewParams,
+    maxRetries: number = 3,
+    retryDelay: number = 1000,
+  ): Promise<ReviewResult> {
+    return this.retryWithBackoff(
+      async () => {
+        const prompt = this.buildPrompt(params);
 
-      const completion = await this.client.chat.completions.create({
-        model: this.model,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You are a senior software engineer and expert code reviewer. Provide thorough, constructive feedback on code changes.',
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        temperature: 0.1,
-        max_tokens: 2048,
-        top_p: 0.8,
-        frequency_penalty: 0,
-        presence_penalty: 0,
-      });
+        const completion = await this.client.chat.completions.create({
+          model: this.model,
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are a senior software engineer and expert code reviewer. Provide thorough, constructive feedback on code changes.',
+            },
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          temperature: 0.1,
+          max_tokens: 2048,
+          top_p: 0.8,
+          frequency_penalty: 0,
+          presence_penalty: 0,
+        });
 
-      const response = completion.choices[0]?.message?.content;
+        const response = completion.choices[0]?.message?.content;
 
-      if (!response || response.trim() === '') {
-        throw new ProviderError('Empty response received from OpenAI', 'openai');
-      }
+        if (!response || response.trim() === '') {
+          throw new ProviderError('Empty response received from OpenAI', 'openai');
+        }
 
-      // Extract usage information
-      const tokensUsed = completion.usage?.total_tokens;
+        // Extract usage information
+        const tokensUsed = completion.usage?.total_tokens;
 
-      // Cost calculation for GPT-4 Turbo (as of 2024)
-      // Input: $0.01 per 1K tokens, Output: $0.03 per 1K tokens
-      const inputTokens = completion.usage?.prompt_tokens || 0;
-      const outputTokens = completion.usage?.completion_tokens || 0;
-      const costUSD = (inputTokens * 0.01 + outputTokens * 0.03) / 1000;
+        // Cost calculation for GPT-4 Turbo (as of 2024)
+        // Input: $0.01 per 1K tokens, Output: $0.03 per 1K tokens
+        const inputTokens = completion.usage?.prompt_tokens || 0;
+        const outputTokens = completion.usage?.completion_tokens || 0;
+        const costUSD = (inputTokens * 0.01 + outputTokens * 0.03) / 1000;
 
-      return {
-        comment: response.trim(),
-        tokensUsed,
-        costUSD: costUSD > 0 ? costUSD : undefined,
-        provider: 'openai',
-      };
-    } catch (error) {
-      if (error instanceof ProviderError) {
-        throw error;
-      }
-
-      // Handle specific OpenAI API errors
-      if (error && typeof error === 'object' && 'status' in error) {
-        const errorObj = error as { status?: number; message?: string };
-        const status = errorObj.status;
-        const message = errorObj.message || 'Unknown OpenAI API error';
-
-        throw new ProviderError(
-          `OpenAI API error: ${message}`,
-          'openai',
-          status,
-          error instanceof Error ? error : undefined,
-        );
-      }
-
-      throw new ProviderError(
-        `Unexpected error during OpenAI review: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        'openai',
-        undefined,
-        error instanceof Error ? error : undefined,
-      );
-    }
+        return {
+          comment: response.trim(),
+          tokensUsed,
+          costUSD: costUSD > 0 ? costUSD : undefined,
+          provider: 'openai',
+        };
+      },
+      maxRetries,
+      retryDelay,
+      `OpenAI ${this.model} API call`,
+    );
   }
 
   protected buildPrompt(params: ReviewParams): string {

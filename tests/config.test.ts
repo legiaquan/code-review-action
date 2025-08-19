@@ -40,6 +40,8 @@ describe('Config', () => {
           '**/*.min.js',
         ]),
         maxChunkLines: 400,
+        maxRetries: 3,
+        retryDelay: 1000,
         rules: [],
       });
     });
@@ -150,7 +152,7 @@ describe('Config', () => {
       Config.loadFromInputs();
 
       expect(mockWarning).toHaveBeenCalledWith(
-        'OpenAI API keys typically start with "sk-". Please verify your key.'
+        'OpenAI API keys typically start with "sk-". Please verify your key.',
       );
     });
   });
@@ -159,7 +161,7 @@ describe('Config', () => {
     it('should parse repository information correctly', () => {
       process.env.GITHUB_REPOSITORY = 'owner/repo-name';
       const result = Config.getRepoInfo();
-      
+
       expect(result).toEqual({
         owner: 'owner',
         repo: 'repo-name',
@@ -168,13 +170,13 @@ describe('Config', () => {
 
     it('should throw error for missing GITHUB_REPOSITORY', () => {
       delete process.env.GITHUB_REPOSITORY;
-      
+
       expect(() => Config.getRepoInfo()).toThrow(ConfigError);
     });
 
     it('should throw error for invalid repository format', () => {
       process.env.GITHUB_REPOSITORY = 'invalid-format';
-      
+
       expect(() => Config.getRepoInfo()).toThrow(ConfigError);
     });
   });
@@ -185,10 +187,10 @@ describe('Config', () => {
       const mockEventPath = '/tmp/github_event.json';
       process.env.GITHUB_EVENT_PATH = mockEventPath;
       process.env.GITHUB_EVENT_NAME = 'pull_request';
-      
+
       // Mock require to return event data
       jest.doMock(mockEventPath, () => ({ number: 123 }), { virtual: true });
-      
+
       const result = Config.getPullRequestNumber();
       expect(result).toBe(123);
     });
@@ -196,9 +198,9 @@ describe('Config', () => {
     it('should throw error when not in pull request context', () => {
       process.env.GITHUB_EVENT_NAME = 'push';
       delete process.env.GITHUB_EVENT_PATH;
-      
+
       mockGetInput.mockReturnValue('');
-      
+
       expect(() => Config.getPullRequestNumber()).toThrow(ConfigError);
     });
   });
@@ -224,14 +226,14 @@ describe('Config', () => {
     it('should get token from input when env var is missing', () => {
       delete process.env.GITHUB_TOKEN;
       mockGetInput.mockReturnValue('input-token');
-      
+
       expect(Config.getGitHubToken()).toBe('input-token');
     });
 
     it('should throw error when no token is available', () => {
       delete process.env.GITHUB_TOKEN;
       mockGetInput.mockReturnValue('');
-      
+
       expect(() => Config.getGitHubToken()).toThrow(ConfigError);
     });
   });

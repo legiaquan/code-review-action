@@ -21,6 +21,8 @@ export class Config {
   ];
 
   private static readonly DEFAULT_MAX_CHUNK_LINES = 400;
+  private static readonly DEFAULT_MAX_RETRIES = 3;
+  private static readonly DEFAULT_RETRY_DELAY = 1000; // 1 second
 
   /**
    * Load and validate configuration from GitHub Action inputs
@@ -46,6 +48,10 @@ export class Config {
       // Get custom rules
       const rules = this.getRules();
 
+      // Get retry configuration
+      const maxRetries = this.getMaxRetries();
+      const retryDelay = this.getRetryDelay();
+
       const config: ActionInputs = {
         provider,
         apiKey,
@@ -54,6 +60,8 @@ export class Config {
         excludeGlobs,
         maxChunkLines,
         rules,
+        maxRetries,
+        retryDelay,
       };
 
       this.validateConfig(config);
@@ -175,6 +183,40 @@ export class Config {
     return rules;
   }
 
+  private static getMaxRetries(): number {
+    const input = core.getInput('max_retries', { required: false });
+
+    if (!input || input.trim() === '') {
+      return this.DEFAULT_MAX_RETRIES;
+    }
+
+    const maxRetries = parseInt(input, 10);
+
+    if (isNaN(maxRetries) || maxRetries < 0 || maxRetries > 10) {
+      throw new ConfigError(`Invalid max_retries: ${input}. Must be a number between 0 and 10`);
+    }
+
+    return maxRetries;
+  }
+
+  private static getRetryDelay(): number {
+    const input = core.getInput('retry_delay', { required: false });
+
+    if (!input || input.trim() === '') {
+      return this.DEFAULT_RETRY_DELAY;
+    }
+
+    const retryDelay = parseInt(input, 10);
+
+    if (isNaN(retryDelay) || retryDelay < 100 || retryDelay > 60000) {
+      throw new ConfigError(
+        `Invalid retry_delay: ${input}. Must be a number between 100 and 60000 (milliseconds)`,
+      );
+    }
+
+    return retryDelay;
+  }
+
   private static validateConfig(config: ActionInputs): void {
     // Validate provider-specific requirements
     if (config.provider === 'gemini' && !config.apiKey.startsWith('AI')) {
@@ -205,6 +247,8 @@ export class Config {
     core.info(`Provider: ${config.provider}`);
     core.info(`Review Level: ${config.reviewLevel}`);
     core.info(`Max Chunk Lines: ${config.maxChunkLines}`);
+    core.info(`Max Retries: ${config.maxRetries}`);
+    core.info(`Retry Delay: ${config.retryDelay}ms`);
     core.info(`Include Patterns: ${config.includeGlobs.join(', ')}`);
     core.info(`Exclude Patterns: ${config.excludeGlobs.join(', ')}`);
 

@@ -7,7 +7,7 @@ import {
 import { BaseProvider, ReviewParams, ReviewResult, ProviderError } from '../types';
 
 export class GeminiProvider extends BaseProvider {
-  protected model = 'gemini-1.5-pro';
+  protected model = 'gemini-1.5-flash';
   private genAI: GoogleGenerativeAI;
   private generativeModel: GenerativeModel;
 
@@ -53,64 +53,48 @@ export class GeminiProvider extends BaseProvider {
     }
   }
 
-  async review(params: ReviewParams): Promise<ReviewResult> {
-    try {
-      const prompt = this.buildPrompt(params);
+  async review(
+    params: ReviewParams,
+    maxRetries: number = 3,
+    retryDelay: number = 1000,
+  ): Promise<ReviewResult> {
+    return this.retryWithBackoff(
+      async () => {
+        const prompt = this.buildPrompt(params);
 
-      const result = await this.generativeModel.generateContent(prompt);
-      const response = await result.response;
+        const result = await this.generativeModel.generateContent(prompt);
+        const response = await result.response;
 
-      if (!response) {
-        throw new ProviderError('No response received from Gemini', 'gemini');
-      }
+        if (!response) {
+          throw new ProviderError('No response received from Gemini', 'gemini');
+        }
 
-      const text = response.text();
+        const text = response.text();
 
-      if (!text || text.trim() === '') {
-        throw new ProviderError('Empty response received from Gemini', 'gemini');
-      }
+        if (!text || text.trim() === '') {
+          throw new ProviderError('Empty response received from Gemini', 'gemini');
+        }
 
-      // Extract token usage if available
-      const tokensUsed = response.usageMetadata?.totalTokenCount;
+        // Extract token usage if available
+        const tokensUsed = response.usageMetadata?.totalTokenCount;
 
-      // Rough cost calculation for Gemini (as of 2024)
-      // Input: $0.00125 per 1K tokens, Output: $0.005 per 1K tokens
-      const inputTokens = response.usageMetadata?.promptTokenCount || 0;
-      const outputTokens = response.usageMetadata?.candidatesTokenCount || 0;
-      const costUSD = (inputTokens * 0.00125 + outputTokens * 0.005) / 1000;
+        // Rough cost calculation for Gemini Flash (cheaper than Pro)
+        // Flash: Input: $0.000075 per 1K tokens, Output: $0.0003 per 1K tokens
+        const inputTokens = response.usageMetadata?.promptTokenCount || 0;
+        const outputTokens = response.usageMetadata?.candidatesTokenCount || 0;
+        const costUSD = (inputTokens * 0.000075 + outputTokens * 0.0003) / 1000;
 
-      return {
-        comment: text.trim(),
-        tokensUsed,
-        costUSD: costUSD > 0 ? costUSD : undefined,
-        provider: 'gemini',
-      };
-    } catch (error) {
-      if (error instanceof ProviderError) {
-        throw error;
-      }
-
-      // Handle specific Gemini API errors
-      if (error && typeof error === 'object' && 'status' in error) {
-        const errorObj = error as { status?: number; message?: string };
-        const status = errorObj.status;
-        const message = errorObj.message || 'Unknown Gemini API error';
-
-        throw new ProviderError(
-          `Gemini API error: ${message}`,
-          'gemini',
-          status,
-          error instanceof Error ? error : undefined,
-        );
-      }
-
-      throw new ProviderError(
-        `Unexpected error during Gemini review: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        'gemini',
-        undefined,
-        error instanceof Error ? error : undefined,
-      );
-    }
+        return {
+          comment: text.trim(),
+          tokensUsed,
+          costUSD: costUSD > 0 ? costUSD : undefined,
+          provider: 'gemini',
+        };
+      },
+      maxRetries,
+      retryDelay,
+      `Gemini ${this.model} API call`,
+    );
   }
 
   protected buildPrompt(params: ReviewParams): string {

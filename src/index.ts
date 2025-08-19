@@ -73,7 +73,7 @@ class AICodeReview {
 
       core.info('✅ AI Code Review completed successfully');
     } catch (error) {
-      this.handleError(error);
+      await this.handleError(error);
     }
   }
 
@@ -131,6 +131,10 @@ class AICodeReview {
     const results: ReviewResult[] = [];
 
     core.info(`🤖 Starting review with ${this.config.provider} provider`);
+    core.info(`📋 Using model: ${(provider as any).getModel?.() || 'unknown'}`);
+    core.info(
+      `🔄 Retry configuration: ${this.config.maxRetries} retries, ${this.config.retryDelay}ms delay`,
+    );
 
     let totalTokens = 0;
     let totalCost = 0;
@@ -185,7 +189,11 @@ class AICodeReview {
                 : undefined,
           };
 
-          const result = await provider.review(reviewParams);
+          const result = await provider.review(
+            reviewParams,
+            this.config.maxRetries,
+            this.config.retryDelay,
+          );
 
           if (result.comment && result.comment.trim()) {
             results.push({
@@ -210,7 +218,15 @@ class AICodeReview {
         );
 
         if (error instanceof ProviderError) {
-          // Continue with other files if one fails
+          // Post error comment for this specific file and continue with others
+          try {
+            await this.postErrorComment(error, file.filename);
+            core.info(`✅ Error details for ${file.filename} posted to PR comment`);
+          } catch (commentError) {
+            core.warning(
+              `Failed to post error comment for ${file.filename}: ${commentError instanceof Error ? commentError.message : 'Unknown error'}`,
+            );
+          }
           continue;
         }
 
@@ -246,6 +262,26 @@ class AICodeReview {
     } catch (error) {
       throw new Error(
         `Failed to post review comment: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
+  }
+
+  private async postErrorComment(error: ProviderError, filename?: string): Promise<void> {
+    try {
+      const comment = this.buildErrorComment(error, filename);
+
+      core.info('💬 Posting error details to PR...');
+
+      await this.octokit.rest.issues.createComment({
+        owner: this.repoInfo.owner,
+        repo: this.repoInfo.repo,
+        issue_number: this.prNumber,
+        body: comment,
+      });
+    } catch (postError) {
+      // Don't throw here - we don't want to mask the original error
+      core.warning(
+        `Failed to post error comment: ${postError instanceof Error ? postError.message : 'Unknown error'}`,
       );
     }
   }
@@ -368,17 +404,91 @@ class AICodeReview {
     return comment;
   }
 
-  private handleError(error: unknown): void {
+  private buildErrorComment(error: ProviderError, filename?: string): string {
+    const timestamp = new Date().toISOString();
+
+    let comment = `## ❌ AI Code Review Error\n\n`;
+
+    comment += `**Provider:** ${error.provider.toUpperCase()}\n`;
+    comment += `**Time:** ${timestamp}\n`;
+    comment += `**Status Code:** ${error.statusCode || 'N/A'}\n`;
+    if (filename) {
+      comment += `**File:** ${filename}\n`;
+    }
+    comment += `\n`;
+
+    comment += `### 🚨 Error Details\n\n`;
+    comment += `\`\`\`\n${error.message}\n\`\`\`\n\n`;
+
+    // Add helpful suggestions based on the error type
+    if (error.message.includes('quota') || error.message.includes('rate limit')) {
+      comment += `### 💡 Suggested Actions\n\n`;
+      comment += `This appears to be a quota or rate limit error. Here are some options:\n\n`;
+      comment += `1. **Wait and retry** - The error message may include a retry delay\n`;
+      comment += `2. **Check your API plan** - You may need to upgrade your ${error.provider} API plan\n`;
+      comment += `3. **Use a different provider** - Consider switching to OpenAI or another provider\n`;
+      comment += `4. **Review usage patterns** - Check if you're making too many requests\n\n`;
+
+      if (error.provider === 'gemini') {
+        comment += `For Gemini specifically:\n`;
+        comment += `- Free tier has daily and per-minute limits\n`;
+        comment += `- Consider upgrading to a paid plan for higher quotas\n`;
+        comment += `- See [Gemini API Rate Limits](https://ai.google.dev/gemini-api/docs/rate-limits) for details\n\n`;
+      }
+    } else if (error.message.includes('authentication') || error.message.includes('API key')) {
+      comment += `### 💡 Suggested Actions\n\n`;
+      comment += `This appears to be an authentication error:\n\n`;
+      comment += `1. **Verify API key** - Check that your ${error.provider.toUpperCase()}_API_KEY secret is correctly set\n`;
+      comment += `2. **Check key permissions** - Ensure the API key has the necessary permissions\n`;
+      comment += `3. **Key expiration** - Some API keys may have expiration dates\n\n`;
+    } else {
+      comment += `### 💡 Suggested Actions\n\n`;
+      comment += `1. **Check the error message** above for specific details\n`;
+      comment += `2. **Verify your ${error.provider} API configuration**\n`;
+      comment += `3. **Try again** - This might be a temporary issue\n`;
+      comment += `4. **Contact support** if the problem persists\n\n`;
+    }
+
+    comment += `### 🔧 Next Steps\n\n`;
+    comment += `- The code review action will be marked as failed\n`;
+    comment += `- You can re-run the action after addressing the issue\n`;
+    comment += `- Consider checking the GitHub Actions logs for more details\n\n`;
+
+    comment += `---\n`;
+    comment += `<sub>🤖 Generated by [AI Code Review Action](https://github.com/legiaquan/code-review-action) • Error ID: \`${Date.now()}\`</sub>`;
+
+    return comment;
+  }
+
+  private async handleError(error: unknown): Promise<void> {
+    let errorMessage = '';
+    let shouldPostComment = false;
+
     if (error instanceof ConfigError) {
-      core.setFailed(`Configuration error: ${error.message}`);
+      errorMessage = `Configuration error: ${error.message}`;
     } else if (error instanceof ProviderError) {
-      core.setFailed(`Provider error (${error.provider}): ${error.message}`);
+      errorMessage = `Provider error (${error.provider}): ${error.message}`;
+      shouldPostComment = true; // Post API errors as comments
     } else if (error instanceof FileProcessingError) {
-      core.setFailed(`File processing error: ${error.message}`);
+      errorMessage = `File processing error: ${error.message}`;
     } else {
       const message = error instanceof Error ? error.message : 'Unknown error occurred';
-      core.setFailed(`Unexpected error: ${message}`);
+      errorMessage = `Unexpected error: ${message}`;
     }
+
+    // Post error as GitHub comment if it's a provider error
+    if (shouldPostComment) {
+      try {
+        await this.postErrorComment(error as ProviderError);
+        core.info('✅ Error details posted to PR comment');
+      } catch (commentError) {
+        core.warning(
+          `Failed to post error comment: ${commentError instanceof Error ? commentError.message : 'Unknown error'}`,
+        );
+      }
+    }
+
+    core.setFailed(errorMessage);
   }
 
   private getStatusEmoji(status: string): string {
