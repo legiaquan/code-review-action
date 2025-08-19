@@ -235,7 +235,9 @@ class AICodeReview {
         // Clean up the comment and add proper formatting
         const cleanComment = comment.trim();
         // Add some structure to the comment if it doesn't have any
-        if (!cleanComment.includes('##') && !cleanComment.includes('**') && !cleanComment.includes('-')) {
+        if (!cleanComment.includes('##') &&
+            !cleanComment.includes('**') &&
+            !cleanComment.includes('-')) {
             // Split into sentences and format as bullet points if multiple issues
             const sentences = cleanComment.split(/[.!?]+/).filter(s => s.trim().length > 0);
             if (sentences.length > 1) {

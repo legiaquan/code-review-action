@@ -50,12 +50,14 @@ class AICodeReview {
       }
 
       core.info(`📁 Found ${filteredFiles.length} files to review`);
-      
+
       // Log all files that will be reviewed
       core.startGroup('📋 Files to be reviewed:');
       filteredFiles.forEach((file, index) => {
         const statusEmoji = this.getStatusEmoji(file.status);
-        core.info(`  ${index + 1}. ${statusEmoji} ${file.filename} (+${file.additions} -${file.deletions})`);
+        core.info(
+          `  ${index + 1}. ${statusEmoji} ${file.filename} (+${file.additions} -${file.deletions})`,
+        );
       });
       core.endGroup();
 
@@ -164,7 +166,9 @@ class AICodeReview {
           }
 
           if (chunkedDiff.chunks.length > 1) {
-            core.info(`    🔎 Reviewing chunk ${chunk.index}/${chunk.total} (lines ${chunk.startLine}-${chunk.endLine})`);
+            core.info(
+              `    🔎 Reviewing chunk ${chunk.index}/${chunk.total} (lines ${chunk.startLine}-${chunk.endLine})`,
+            );
           }
 
           const reviewParams = {
@@ -191,7 +195,7 @@ class AICodeReview {
 
             if (result.tokensUsed) totalTokens += result.tokensUsed;
             if (result.costUSD) totalCost += result.costUSD;
-            
+
             core.info(`    ✅ Review completed - Found issues to report`);
           } else {
             core.info(`    ✅ Review completed - No issues found`);
@@ -254,12 +258,16 @@ class AICodeReview {
     }
 
     formatted += `\n\n`;
-    
+
     // Clean up the comment and add proper formatting
     const cleanComment = comment.trim();
-    
+
     // Add some structure to the comment if it doesn't have any
-    if (!cleanComment.includes('##') && !cleanComment.includes('**') && !cleanComment.includes('-')) {
+    if (
+      !cleanComment.includes('##') &&
+      !cleanComment.includes('**') &&
+      !cleanComment.includes('-')
+    ) {
       // Split into sentences and format as bullet points if multiple issues
       const sentences = cleanComment.split(/[.!?]+/).filter(s => s.trim().length > 0);
       if (sentences.length > 1) {
@@ -281,7 +289,7 @@ class AICodeReview {
     const reviewedFilesCount = new Set(results.map(r => r.comment.match(/### 📄 (.+)/)?.[1])).size;
 
     let comment = `## 🤖 AI Code Review Report\n\n`;
-    
+
     // Summary section with better formatting
     comment += `### 📊 Review Summary\n`;
     comment += `| Metric | Value |\n`;
@@ -336,7 +344,7 @@ class AICodeReview {
       const emoji = this.getStatusEmoji(status);
       comment += `- ${emoji} ${status}: ${count} file(s)\n`;
     });
-    
+
     if (totalTokens > 0 || totalCost > 0) {
       comment += `\n**AI Usage:**\n`;
       if (totalTokens > 0) {
