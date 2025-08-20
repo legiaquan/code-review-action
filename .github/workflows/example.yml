@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: AI-Powered Code Review with Gemini
-        uses: ./
+        uses: legiaquan/code-review-action@v1.0.0
         with:
           provider: 'gemini'
           api_key: ${{ secrets.GEMINI_API_KEY }}
@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: AI-Powered Code Review with OpenAI
-        uses: ./
+        uses: legiaquan/code-review-action@v1.0.0
         with:
           provider: 'openai'
           api_key: ${{ secrets.OPENAI_API_KEY }}
@@ -62,7 +62,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Security Code Review
-        uses: ./
+        uses: legiaquan/code-review-action@v1.0.0
         with:
           provider: 'gemini'
           api_key: ${{ secrets.GEMINI_API_KEY }}
