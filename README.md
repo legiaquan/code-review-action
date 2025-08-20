@@ -5,7 +5,7 @@
 ## Features
 
 - 🔌 **Pluggable Architecture**: Easy to add new AI providers
-- 🎯 **Smart Filtering**: Include/exclude files using glob patterns  
+- 🎯 **Smart Filtering**: Include/exclude files using glob patterns
 - 📦 **Chunking Support**: Handles large diffs by splitting into manageable chunks
 - 🎨 **Customizable Rules**: Add your own review criteria
 - 💰 **Cost Tracking**: Monitor token usage and estimated costs
@@ -14,11 +14,11 @@
 
 ## Supported Providers
 
-| Provider | Status | Model | Notes |
-|----------|--------|-------|-------|
-| **Gemini** | ✅ Ready | `gemini-1.5-pro` | Google's latest model, great performance |
-| **OpenAI** | ✅ Ready | `gpt-4-turbo-preview` | High quality reviews, higher cost |
-| **HuggingFace** | 🚧 Coming Soon | Various | Open source models |
+| Provider        | Status         | Model                 | Notes                                    |
+| --------------- | -------------- | --------------------- | ---------------------------------------- |
+| **Gemini**      | ✅ Ready       | `gemini-1.5-flash`    | Google's latest model, great performance |
+| **OpenAI**      | ✅ Ready       | `gpt-4-turbo-preview` | High quality reviews, higher cost        |
+| **HuggingFace** | 🚧 Coming Soon | Various               | Open source models                       |
 
 ## Quick Start
 
@@ -32,6 +32,11 @@ name: AI Code Review
 on:
   pull_request:
     types: [opened, synchronize]
+
+permissions:
+  issues: write
+  pull-requests: write
+  contents: read
 
 jobs:
   ai-review:
@@ -58,6 +63,11 @@ on:
         description: 'PR number to review'
         required: true
 
+permissions:
+  issues: write
+  pull-requests: write
+  contents: read
+
 jobs:
   ai-review:
     runs-on: ubuntu-latest
@@ -82,21 +92,31 @@ jobs:
 
 ### Inputs
 
-| Input | Description | Required | Default |
-|-------|-------------|----------|---------|
-| `provider` | AI provider (`gemini`, `openai`) | No | `gemini` |
-| `api_key` | API key for the selected provider | Yes | - |
-| `review_level` | Review scope (`diff`, `file`, `full`) | No | `diff` |
-| `include_globs` | Files to include (comma-separated) | No | `src/**/*.ts,src/**/*.js,lib/**` |
-| `exclude_globs` | Files to exclude (comma-separated) | No | `**/*.lock,**/dist/**,**/node_modules/**` |
-| `max_chunk_lines` | Max lines per AI request | No | `400` |
-| `rules` | Custom review rules (comma or newline separated) | No | - |
+| Input             | Description                                      | Required | Default                                   |
+| ----------------- | ------------------------------------------------ | -------- | ----------------------------------------- |
+| `provider`        | AI provider (`gemini`, `openai`)                 | No       | `gemini`                                  |
+| `api_key`         | API key for the selected provider                | Yes      | -                                         |
+| `review_level`    | Review scope (`diff`, `file`, `full`)            | No       | `diff`                                    |
+| `include_globs`   | Files to include (comma-separated)               | No       | `src/**/*.ts,src/**/*.js,lib/**`          |
+| `exclude_globs`   | Files to exclude (comma-separated)               | No       | `**/*.lock,**/dist/**,**/node_modules/**` |
+| `max_chunk_lines` | Max lines per AI request                         | No       | `400`                                     |
+| `rules`           | Custom review rules (comma or newline separated) | No       | -                                         |
 
 ### Review Levels
 
 - **`diff`**: Only review changed lines (fastest, cheapest)
 - **`file`**: Review entire files that have changes
 - **`full`**: Review all files in the repository (expensive!)
+
+## Required Permissions
+
+This action requires specific GitHub permissions to function properly:
+
+- **`issues: write`**: To create and update issues for review comments
+- **`pull-requests: write`**: To add review comments to pull requests
+- **`contents: read`**: To read repository contents for code analysis
+
+**Note**: Without these permissions, the action will fail to post review comments. Make sure to include the `permissions` section in your workflow file as shown in the examples above.
 
 ## API Keys Setup
 
@@ -178,10 +198,10 @@ export class YourProvider extends BaseProvider {
   async review(params: ReviewParams): Promise<ReviewResult> {
     try {
       const prompt = this.buildPrompt(params);
-      
+
       // Call your provider's API
       const response = await yourProviderClient.generate(prompt);
-      
+
       return {
         comment: response.text,
         tokensUsed: response.tokens,
@@ -193,7 +213,7 @@ export class YourProvider extends BaseProvider {
         `Your provider error: ${error.message}`,
         'your-provider',
         error.status,
-        error
+        error,
       );
     }
   }
@@ -299,6 +319,11 @@ on:
   pull_request:
     types: [opened, synchronize]
 
+permissions:
+  issues: write
+  pull-requests: write
+  contents: read
+
 jobs:
   review:
     runs-on: ubuntu-latest
@@ -325,6 +350,11 @@ on:
         type: choice
         options: ['gemini', 'openai']
 
+permissions:
+  issues: write
+  pull-requests: write
+  contents: read
+
 jobs:
   review:
     runs-on: ubuntu-latest
@@ -342,6 +372,11 @@ jobs:
 name: Multi-Provider Review
 on: pull_request
 
+permissions:
+  issues: write
+  pull-requests: write
+  contents: read
+
 jobs:
   gemini-review:
     runs-on: ubuntu-latest
@@ -350,7 +385,7 @@ jobs:
         with:
           provider: 'gemini'
           api_key: ${{ secrets.GEMINI_API_KEY }}
-  
+
   openai-review:
     runs-on: ubuntu-latest
     steps:
@@ -370,7 +405,7 @@ jobs:
 
 ### OpenAI Pricing (2024)
 
-- GPT-4 Turbo Input: ~$0.01 per 1K tokens  
+- GPT-4 Turbo Input: ~$0.01 per 1K tokens
 - GPT-4 Turbo Output: ~$0.03 per 1K tokens
 - Higher quality but more expensive
 
@@ -386,33 +421,41 @@ jobs:
 ### Common Issues
 
 **API Key Issues**
+
 ```
 Error: Invalid API key
 ```
+
 - Verify the API key is correctly set in repository secrets
 - Check that the key hasn't expired
 - Ensure the key has the necessary permissions
 
 **No Files to Review**
+
 ```
 Info: No files match the include/exclude patterns
 ```
+
 - Check your `include_globs` and `exclude_globs` patterns
 - Verify files were actually changed in the PR
 - Use `**/*` as include pattern to review all files
 
 **Rate Limiting**
+
 ```
 Error: Rate limit exceeded
 ```
+
 - The action includes automatic delays between requests
 - Consider reducing `max_chunk_lines` for smaller requests
 - Check your provider's rate limits
 
 **Large PR Issues**
+
 ```
 Error: Request too large
 ```
+
 - Reduce `max_chunk_lines` (try 200-300)
 - Use more specific `include_globs`
 - Consider breaking large PRs into smaller ones
@@ -440,6 +483,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 ## Changelog
 
 ### v1.0.0
+
 - Initial release with Gemini and OpenAI support
 - Pluggable provider architecture
 - Comprehensive file filtering and chunking

@@ -1,6 +1,6 @@
 name: 'AI Code Review'
 description: 'AI-powered code review with pluggable providers (Gemini, OpenAI, etc.)'
-author: 'Your Name'
+author: 'Quan Le'
 branding:
   icon: 'eye'
   color: 'blue'
