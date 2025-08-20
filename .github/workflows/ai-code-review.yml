@@ -1,5 +1,10 @@
 name: AI Code Review
 
+permissions:
+  issues: write
+  pull-requests: write
+  contents: read
+
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -30,10 +35,10 @@ jobs:
   ai-code-review:
     name: AI Code Review
     runs-on: ubuntu-latest
-    
+
     # Skip if PR is from a fork (to protect secrets)
     if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'workflow_dispatch'
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -71,7 +76,7 @@ jobs:
   test-action:
     name: Test Action
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -104,17 +109,17 @@ jobs:
             echo "❌ action.yml not found"
             exit 1
           fi
-          
+
           # Check if dist folder exists after build
           if [ ! -d "dist" ]; then
             echo "❌ dist folder not found after build"
             exit 1
           fi
-          
+
           # Check if main entry point exists
           if [ ! -f "dist/index.js" ]; then
             echo "❌ dist/index.js not found"
             exit 1
           fi
-          
+
           echo "✅ Action configuration is valid"

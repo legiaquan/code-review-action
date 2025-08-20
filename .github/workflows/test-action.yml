@@ -1,5 +1,10 @@
 name: Test AI Code Review Action
 
+permissions:
+  issues: write
+  pull-requests: write
+  contents: read
+
 on:
   workflow_dispatch:
     inputs:
@@ -34,7 +39,7 @@ jobs:
     if: ${{ github.event.inputs.create_pr == 'true' }}
     outputs:
       pr_number: ${{ steps.create-pr.outputs.pr_number }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -45,17 +50,17 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          
+
           # Create a unique branch name
           BRANCH_NAME="test-review-$(date +%s)"
           git checkout -b $BRANCH_NAME
-          
+
           # Make some changes to test file
           echo "// Added test comment $(date)" >> test-sample.ts
           git add test-sample.ts
           git commit -m "Add test changes for AI review"
           git push origin $BRANCH_NAME
-          
+
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
 
       - name: Create Pull Request
@@ -88,7 +93,7 @@ jobs:
               Expected AI feedback should cover these areas based on the selected scenario.
               `
             });
-            
+
             console.log('Created PR:', pr.number);
             return { pr_number: pr.number };
 
@@ -97,7 +102,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [create-test-pr]
     if: ${{ always() && (github.event.inputs.create_pr != 'true' || needs.create-test-pr.result == 'success') }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -136,7 +141,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [create-test-pr]
     if: ${{ always() && github.event.inputs.test_scenario == 'security-focused' }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -178,7 +183,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [create-test-pr]
     if: ${{ always() && github.event.inputs.test_scenario == 'performance-focused' }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -219,7 +224,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [create-test-pr]
     if: ${{ always() && github.event.inputs.test_scenario == 'typescript-focused' }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -259,16 +264,23 @@ jobs:
   cleanup-test-pr:
     name: Cleanup Test PR
     runs-on: ubuntu-latest
-    needs: [create-test-pr, test-basic-review, test-security-review, test-performance-review, test-typescript-review]
+    needs:
+      [
+        create-test-pr,
+        test-basic-review,
+        test-security-review,
+        test-performance-review,
+        test-typescript-review,
+      ]
     if: ${{ always() && github.event.inputs.create_pr == 'true' && needs.create-test-pr.outputs.pr_number }}
-    
+
     steps:
       - name: Close Test PR
         uses: actions/github-script@v7
         with:
           script: |
             const prNumber = ${{ needs.create-test-pr.outputs.pr_number }};
-            
+
             // Add a comment to the PR
             await github.rest.issues.createComment({
               owner: context.repo.owner,
@@ -288,7 +300,7 @@ jobs:
               This PR will be automatically closed in 5 minutes to keep the repository clean.
               `
             });
-            
+
             // Wait 5 minutes then close the PR
             setTimeout(async () => {
               await github.rest.pulls.update({

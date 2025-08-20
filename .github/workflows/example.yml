@@ -3,6 +3,11 @@
 
 name: Example AI Code Review
 
+permissions:
+  issues: write
+  pull-requests: write
+  contents: read
+
 on:
   workflow_dispatch:
     inputs:
