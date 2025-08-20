@@ -1,4 +1,4 @@
-# AI Code Review Action
+# AI-Powered Code Review Action
 
 🤖 An intelligent GitHub Action that provides automated code reviews using AI providers like Google Gemini, OpenAI GPT-4, and more. Built with TypeScript and designed with a pluggable architecture for easy extensibility.
 
@@ -27,7 +27,7 @@
 Create `.github/workflows/ai-code-review.yml`:
 
 ```yaml
-name: AI Code Review
+name: AI-Powered Code Review
 
 on:
   pull_request:
@@ -42,7 +42,7 @@ jobs:
   ai-review:
     runs-on: ubuntu-latest
     steps:
-      - name: AI Code Review
+      - name: AI-Powered Code Review
         uses: legiaquan/code-review-action@v1
         with:
           provider: 'gemini'
@@ -52,7 +52,7 @@ jobs:
 ### 2. Advanced Configuration
 
 ```yaml
-name: AI Code Review
+name: AI-Powered Code Review
 
 on:
   pull_request:
@@ -72,7 +72,7 @@ jobs:
   ai-review:
     runs-on: ubuntu-latest
     steps:
-      - name: AI Code Review
+      - name: AI-Powered Code Review
         uses: legiaquan/code-review-action@v1
         with:
           provider: 'gemini'

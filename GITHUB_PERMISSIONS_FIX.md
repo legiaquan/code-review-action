@@ -1,11 +1,13 @@
 # GitHub Permissions Fix for Code Review Action
 
 ## Problem
+
 The error "Resource not accessible by integration" occurs when the GitHub token doesn't have sufficient permissions to create comments on issues/PRs.
 
 ## Solution Implemented
 
 ### 1. Enhanced Dual API Approach
+
 - **Primary**: Uses Octokit (GitHub's official SDK)
 - **Fallback**: Uses direct fetch API calls to GitHub REST API
 - **Smart switching**: Automatically detects permission errors and switches to fallback
@@ -13,20 +15,24 @@ The error "Resource not accessible by integration" occurs when the GitHub token 
 ### 2. Key Improvements Made
 
 #### Permission Validation
+
 - Proactive token validation before attempting to post comments
 - Lightweight repository access test to verify permissions
 
 #### Retry Logic with Exponential Backoff
+
 - Automatic retry for transient failures
 - Exponential backoff to avoid rate limiting
 - Smart detection of non-retryable errors (401, 403, 404, 422)
 
 #### Enhanced Error Handling
+
 - Specific error messages for different HTTP status codes
 - Detailed troubleshooting guidance in error messages
 - Comprehensive logging for debugging
 
 #### Robust Fallback API
+
 - Direct GitHub REST API implementation using fetch
 - Proper error parsing and status code handling
 - Enhanced debugging information
@@ -38,21 +44,21 @@ The error "Resource not accessible by integration" occurs when the GitHub token 
 Add explicit permissions to your workflow file:
 
 ```yaml
-name: AI Code Review
+name: AI-Powered Code Review
 on:
   pull_request:
     types: [opened, synchronize]
 
 permissions:
-  issues: write           # Required to create comments
-  pull-requests: write    # Required for PR operations
-  contents: read          # Required to read repository content
+  issues: write # Required to create comments
+  pull-requests: write # Required for PR operations
+  contents: read # Required to read repository content
 
 jobs:
   code-review:
     runs-on: ubuntu-latest
     steps:
-      - name: AI Code Review
+      - name: AI-Powered Code Review
         uses: your-username/code-review-action@main
         with:
           provider: 'gemini'
@@ -64,12 +70,14 @@ jobs:
 ### For Personal Access Tokens
 
 Create a token with these scopes:
+
 - `repo` (for private repositories) or `public_repo` (for public repositories)
 - `write:discussion` (for creating comments)
 
 ### For GitHub Apps
 
 Configure the app with these permissions:
+
 - **Issues**: Write
 - **Pull requests**: Write
 - **Contents**: Read
@@ -123,11 +131,13 @@ curl -L \
 ### Debugging Steps
 
 1. **Check token validity**:
+
    ```bash
    curl -H "Authorization: Bearer YOUR_TOKEN" https://api.github.com/user
    ```
 
 2. **Verify repository access**:
+
    ```bash
    curl -H "Authorization: Bearer YOUR_TOKEN" https://api.github.com/repos/OWNER/REPO
    ```
@@ -142,17 +152,20 @@ curl -L \
 ## Features of the Enhanced Implementation
 
 ### Smart Error Detection
+
 - Automatically detects permission-related errors
 - Distinguishes between retryable and non-retryable errors
 - Provides context-specific error messages
 
 ### Comprehensive Logging
+
 - Debug information for API calls
 - Token validation results
 - Detailed error information
 - Success confirmations with comment IDs
 
 ### Resilient Operation
+
 - Multiple retry attempts with backoff
 - Graceful fallback between APIs
 - Detailed troubleshooting guidance

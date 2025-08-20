@@ -1,7 +1,7 @@
 # Example workflow showing how to use the AI Code Review Action
 # This file is for demonstration purposes and is not run automatically
 
-name: Example AI Code Review
+name: Example AI-Powered Code Review
 
 permissions:
   issues: write
@@ -22,7 +22,7 @@ jobs:
     name: Gemini Code Review
     runs-on: ubuntu-latest
     steps:
-      - name: AI Code Review with Gemini
+      - name: AI-Powered Code Review with Gemini
         uses: ./
         with:
           provider: 'gemini'
@@ -37,7 +37,7 @@ jobs:
     name: OpenAI Code Review
     runs-on: ubuntu-latest
     steps:
-      - name: AI Code Review with OpenAI
+      - name: AI-Powered Code Review with OpenAI
         uses: ./
         with:
           provider: 'openai'

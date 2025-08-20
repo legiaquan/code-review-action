@@ -1,4 +1,4 @@
-# Contributing to AI Code Review Action
+# Contributing to AI-Powered Code Review Action
 
 Thank you for your interest in contributing! This guide will help you get started.
 
@@ -14,17 +14,20 @@ Thank you for your interest in contributing! This guide will help you get starte
 
 1. Fork the repository
 2. Clone your fork:
+
    ```bash
    git clone https://github.com/your-username/ai-code-review-action.git
    cd ai-code-review-action
    ```
 
 3. Install dependencies:
+
    ```bash
    npm install
    ```
 
 4. Build the project:
+
    ```bash
    npm run build
    ```
@@ -39,6 +42,7 @@ Thank you for your interest in contributing! This guide will help you get starte
 ### Making Changes
 
 1. Create a feature branch:
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
@@ -46,6 +50,7 @@ Thank you for your interest in contributing! This guide will help you get starte
 2. Make your changes
 3. Add tests for new functionality
 4. Run the test suite:
+
    ```bash
    npm test
    npm run lint
@@ -91,10 +96,10 @@ export class YourProvider extends BaseProvider {
   async review(params: ReviewParams): Promise<ReviewResult> {
     try {
       const prompt = this.buildPrompt(params);
-      
+
       // Call your provider's API
       const response = await yourProviderClient.generate(prompt);
-      
+
       return {
         comment: response.text,
         tokensUsed: response.tokens,
@@ -106,7 +111,7 @@ export class YourProvider extends BaseProvider {
         `Your provider error: ${error.message}`,
         'your-provider',
         error.status,
-        error
+        error,
       );
     }
   }
@@ -163,6 +168,7 @@ Create `tests/your-provider.test.ts` with comprehensive tests.
 ### Bug Reports
 
 Include:
+
 - Clear description of the issue
 - Steps to reproduce
 - Expected vs actual behavior
@@ -172,6 +178,7 @@ Include:
 ### Feature Requests
 
 Include:
+
 - Clear description of the feature
 - Use case and motivation
 - Proposed implementation (if any)
@@ -194,6 +201,7 @@ Include:
 ## Recognition
 
 Contributors will be recognized in:
+
 - README.md contributors section
 - Release notes
 - GitHub contributors page

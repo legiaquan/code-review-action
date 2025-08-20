@@ -1,5 +1,5 @@
-name: 'AI Code Review'
-description: 'AI-powered code review with pluggable providers (Gemini, OpenAI, etc.)'
+name: 'AI-Powered Code Review'
+description: 'Intelligent code review using AI providers (Gemini, OpenAI) with pluggable architecture'
 author: 'Quan Le'
 branding:
   icon: 'eye'

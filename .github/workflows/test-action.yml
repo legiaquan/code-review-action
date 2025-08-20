@@ -1,4 +1,4 @@
-name: Test AI Code Review Action
+name: Test AI-Powered Code Review Action
 
 permissions:
   issues: write
@@ -71,13 +71,13 @@ jobs:
             const { data: pr } = await github.rest.pulls.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: 'Test AI Code Review - ${{ github.event.inputs.test_scenario }}',
+              title: 'Test AI-Powered Code Review - ${{ github.event.inputs.test_scenario }}',
               head: process.env.BRANCH_NAME,
               base: 'main',
               body: `
-              ## Test AI Code Review Action
+              ## Test AI-Powered Code Review Action
               
-              This is an automated test PR to verify the AI Code Review Action.
+              This is an automated test PR to verify the AI-Powered Code Review Action.
               
               **Test Scenario:** ${{ github.event.inputs.test_scenario }}
               **Provider:** ${{ github.event.inputs.provider }}
@@ -289,7 +289,7 @@ jobs:
               body: `
               ## 🧪 Test Completed
               
-              The AI Code Review Action test has been completed successfully!
+              The AI-Powered Code Review Action test has been completed successfully!
               
               **Test Results:**
               - ✅ Basic Review: ${{ needs.test-basic-review.result }}

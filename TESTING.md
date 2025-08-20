@@ -1,6 +1,6 @@
-# Testing Guide for AI Code Review Action
+# Testing Guide for AI-Powered Code Review Action
 
-This guide explains how to test the AI Code Review Action using the provided test files and workflows.
+This guide explains how to test the AI-Powered Code Review Action using the provided test files and workflows.
 
 ## Test Files Overview
 
@@ -8,23 +8,23 @@ This guide explains how to test the AI Code Review Action using the provided tes
 
 This file contains **15 different types of code issues** that the AI should detect:
 
-| Issue Type | Description | Line(s) |
-|------------|-------------|---------|
-| **Security** | Hardcoded API keys and passwords | 7-8 |
-| **Security** | SQL injection vulnerability | 50-53 |
-| **TypeScript** | `any` type usage | 11-13 |
-| **Error Handling** | Missing try-catch blocks | 16-20 |
-| **Code Quality** | Unused variables | 24 |
-| **Performance** | Inefficient loops | 26-31 |
-| **Logic Errors** | Division by zero | 35-37 |
-| **Memory Leaks** | Uncleaned timers | 40-54 |
-| **Input Validation** | Weak password validation | 59-61 |
-| **Error Handling** | Poor error context | 64-70 |
-| **Race Conditions** | Async counter increment | 73-78 |
-| **Performance** | Inefficient deduplication | 81-94 |
-| **Logging** | Console.log instead of proper logger | 97-101 |
-| **Magic Numbers** | Hardcoded discount values | 104-111 |
-| **Architecture** | Bloated interface | 114-123 |
+| Issue Type           | Description                          | Line(s) |
+| -------------------- | ------------------------------------ | ------- |
+| **Security**         | Hardcoded API keys and passwords     | 7-8     |
+| **Security**         | SQL injection vulnerability          | 50-53   |
+| **TypeScript**       | `any` type usage                     | 11-13   |
+| **Error Handling**   | Missing try-catch blocks             | 16-20   |
+| **Code Quality**     | Unused variables                     | 24      |
+| **Performance**      | Inefficient loops                    | 26-31   |
+| **Logic Errors**     | Division by zero                     | 35-37   |
+| **Memory Leaks**     | Uncleaned timers                     | 40-54   |
+| **Input Validation** | Weak password validation             | 59-61   |
+| **Error Handling**   | Poor error context                   | 64-70   |
+| **Race Conditions**  | Async counter increment              | 73-78   |
+| **Performance**      | Inefficient deduplication            | 81-94   |
+| **Logging**          | Console.log instead of proper logger | 97-101  |
+| **Magic Numbers**    | Hardcoded discount values            | 104-111 |
+| **Architecture**     | Bloated interface                    | 114-123 |
 
 ## Testing Methods
 
@@ -34,7 +34,7 @@ This file contains **15 different types of code issues** that the AI should dete
 
 ```bash
 # Go to your repository's Actions tab
-# Run "Test AI Code Review Action" workflow
+# Run "Test AI-Powered Code Review Action" workflow
 # Select options:
 # - Test scenario: basic/security-focused/performance-focused/typescript-focused
 # - Provider: gemini/openai
@@ -45,7 +45,7 @@ This file contains **15 different types of code issues** that the AI should dete
 
 ```bash
 # Create a PR manually with changes to test-sample.ts
-# Run "Test AI Code Review Action" workflow
+# Run "Test AI-Powered Code Review Action" workflow
 # Enter the PR number
 # Select test scenario and provider
 ```
@@ -83,48 +83,56 @@ Add to your workflow:
 ## Test Scenarios
 
 ### 1. Basic Review (`basic`)
+
 - General code quality check
 - Best practices validation
 - Bug detection
 - Readability improvements
 
 **Expected AI Feedback:**
+
 - Identifies hardcoded secrets
 - Suggests proper TypeScript types
 - Points out unused variables
 - Recommends error handling
 
 ### 2. Security-Focused (`security-focused`)
+
 - Hardcoded secrets detection
 - SQL injection vulnerabilities
 - Input validation issues
 - Authentication problems
 
 **Expected AI Feedback:**
+
 - **CRITICAL**: Hardcoded API keys and passwords
 - **CRITICAL**: SQL injection in `getUserById`
 - **IMPORTANT**: Weak password validation
 - **MODERATE**: Missing input sanitization
 
 ### 3. Performance-Focused (`performance-focused`)
+
 - Inefficient algorithms
 - Memory leak detection
 - Synchronous operations
 - Resource cleanup
 
 **Expected AI Feedback:**
+
 - Inefficient deduplication algorithm
 - Memory leak in DataProcessor
 - Synchronous file operations
 - Race condition in counter
 
 ### 4. TypeScript-Focused (`typescript-focused`)
+
 - Type safety issues
 - Interface design problems
 - Generic usage
 - Async/await patterns
 
 **Expected AI Feedback:**
+
 - Replace `any` types with proper types
 - Break down large interfaces
 - Improve error type definitions
@@ -135,6 +143,7 @@ Add to your workflow:
 ### Good AI Review Should Include:
 
 #### Security Issues ✅
+
 ```
 🔒 CRITICAL: Hardcoded API key detected on line 7
 🔒 CRITICAL: SQL injection vulnerability in getUserById function
@@ -142,6 +151,7 @@ Add to your workflow:
 ```
 
 #### TypeScript Issues ✅
+
 ```
 📝 Replace 'any' type with proper interfaces
 📝 Consider breaking down the User interface
@@ -149,6 +159,7 @@ Add to your workflow:
 ```
 
 #### Performance Issues ✅
+
 ```
 ⚡ Inefficient O(n²) deduplication algorithm - use Set instead
 ⚡ Memory leak: timers not cleared in DataProcessor
@@ -156,6 +167,7 @@ Add to your workflow:
 ```
 
 #### Code Quality Issues ✅
+
 ```
 🧹 Unused variable 'unusedVariable' on line 24
 🧹 Magic numbers: extract discount constants
@@ -163,6 +175,7 @@ Add to your workflow:
 ```
 
 ### Poor AI Review Indicators ❌
+
 - Missing critical security issues
 - Generic feedback without specific line numbers
 - No concrete code suggestions
@@ -180,12 +193,13 @@ Run the same test with both providers:
 export TEST_PROVIDER=gemini
 node scripts/test-local.js
 
-# Test with OpenAI  
+# Test with OpenAI
 export TEST_PROVIDER=openai
 node scripts/test-local.js
 ```
 
 **Expected Differences:**
+
 - **Gemini**: More detailed explanations, better context
 - **OpenAI**: More structured format, concise suggestions
 - **Both**: Should catch the same critical issues
@@ -195,31 +209,41 @@ node scripts/test-local.js
 ### Common Issues
 
 #### 1. API Key Problems
+
 ```bash
 Error: Invalid API key
 ```
+
 **Solution:** Verify API key format and permissions
 
 #### 2. Rate Limiting
+
 ```bash
 Error: Rate limit exceeded
 ```
+
 **Solution:** Wait a few minutes or reduce chunk size
 
 #### 3. No Issues Found
+
 ```bash
 Info: No issues found
 ```
+
 **Check:**
+
 - File patterns include `test-sample.ts`
 - Rules are properly configured
 - Provider is responding correctly
 
 #### 4. Build Errors
+
 ```bash
 Error: Cannot find module
 ```
+
 **Solution:**
+
 ```bash
 npm install
 npm run build
@@ -230,6 +254,7 @@ npm run build
 ### Add New Test Cases
 
 1. **Modify `test-sample.ts`:**
+
 ```typescript
 // Add your test case
 function yourTestFunction() {
@@ -258,6 +283,7 @@ time node scripts/test-local.js
 ### Token Usage Monitoring
 
 Check action outputs for:
+
 - Total tokens used
 - Estimated cost
 - Processing time per file
@@ -265,6 +291,7 @@ Check action outputs for:
 ### Load Testing
 
 Test with larger files:
+
 ```bash
 # Create large test file
 head -c 10000 test-sample.ts > large-test.ts
@@ -283,10 +310,11 @@ npm test && node scripts/test-local.js
 ### Scheduled Testing
 
 Add to `.github/workflows/scheduled-test.yml`:
+
 ```yaml
 on:
   schedule:
-    - cron: '0 0 * * 0'  # Weekly
+    - cron: '0 0 * * 0' # Weekly
 ```
 
 ## Reporting Issues

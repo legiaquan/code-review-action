@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Release script for AI Code Review Action
+# Release script for AI-Powered Code Review Action
 set -e
 
 # Colors for output
@@ -10,7 +10,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}🚀 AI Code Review Action Release Script${NC}"
+echo -e "${BLUE}🚀 AI-Powered Code Review Action Release Script${NC}"
 
 # Check if we're on main branch
 CURRENT_BRANCH=$(git branch --show-current)
