@@ -34,7 +34,7 @@
     "@actions/github": "^6.0.0",
     "@google/generative-ai": "^0.15.0",
     "@octokit/rest": "^20.0.2",
-    "minimatch": "^9.0.3",
+    "minimatch": "^10.0.3",
     "openai": "^4.20.1"
   },
   "devDependencies": {
