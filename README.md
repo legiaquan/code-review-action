@@ -47,6 +47,7 @@ jobs:
         with:
           provider: 'gemini'
           api_key: ${{ secrets.GEMINI_API_KEY }}
+          pr_number: ${{ github.event_name == 'workflow_dispatch' && inputs.pr_number || github.event.pull_request.number }}
 ```
 
 ### 2. Advanced Configuration
@@ -77,6 +78,7 @@ jobs:
         with:
           provider: 'gemini'
           api_key: ${{ secrets.GEMINI_API_KEY }}
+          pr_number: ${{ github.event_name == 'workflow_dispatch' && inputs.pr_number || github.event.pull_request.number }}
           review_level: 'diff'
           include_globs: 'src/**/*.ts,lib/**/*.js'
           exclude_globs: '**/*.test.ts,**/*.spec.ts'
@@ -332,6 +334,7 @@ jobs:
         with:
           provider: 'gemini'
           api_key: ${{ secrets.GEMINI_API_KEY }}
+          pr_number: ${{ github.event_name == 'workflow_dispatch' && inputs.pr_number || github.event.pull_request.number }}
 ```
 
 ### Triggered Review
@@ -361,9 +364,9 @@ jobs:
     steps:
       - uses: legiaquan/code-review-action@v1
         with:
-          provider: ${{ github.event.inputs.provider }}
+          provider: ${{ inputs.provider }}
           api_key: ${{ secrets.GEMINI_API_KEY }}
-          pr_number: ${{ github.event.inputs.pr_number }}
+          pr_number: ${{ inputs.pr_number }}
 ```
 
 ### Multiple Providers

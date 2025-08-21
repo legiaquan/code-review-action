@@ -71,12 +71,25 @@ class AICodeReview {
   constructor() {
     // Load configuration
     this.config = utils_1.Config.loadFromInputs();
-    // Get repository info and PR number
+    // Initialize placeholders; actual initialization happens in init()
     const repoInfo = utils_1.Config.getRepoInfo();
-    this.prNumber = utils_1.Config.getPullRequestNumber();
-    // Initialize services
     this.githubClient = new github_1.GitHubClient(repoInfo);
     this.commentBuilder = new services_1.CommentBuilder(this.config);
+    // prNumber and errorHandler/fileProcessor will be finalized in init()
+    this.prNumber = 0;
+    this.errorHandler = new services_1.ErrorHandler(this.githubClient, this.commentBuilder, 0);
+    this.fileProcessor = new services_1.FileProcessor(
+      this.config,
+      this.commentBuilder,
+      this.errorHandler,
+      this.githubClient,
+      0,
+    );
+  }
+  async init() {
+    // Resolve PR number with context first, then Octokit fallbacks
+    this.prNumber = await utils_1.Config.getPullRequestNumberAsync();
+    // Recreate services that rely on prNumber
     this.errorHandler = new services_1.ErrorHandler(
       this.githubClient,
       this.commentBuilder,
@@ -96,6 +109,7 @@ class AICodeReview {
   async run() {
     try {
       core.info('🚀 Starting AI Code Review...');
+      await this.init();
       // Get and filter changed files from PR
       const changedFiles = await this.fileProcessor.getChangedFiles();
       if (changedFiles.length === 0) {

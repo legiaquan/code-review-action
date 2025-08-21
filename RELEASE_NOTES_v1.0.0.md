@@ -57,6 +57,7 @@ jobs:
         with:
           provider: 'gemini'
           api_key: ${{ secrets.GEMINI_API_KEY }}
+          pr_number: ${{ github.event_name == 'workflow_dispatch' && inputs.pr_number || github.event.pull_request.number }}
 ```
 
 ### Advanced Configuration
@@ -67,6 +68,7 @@ jobs:
   with:
     provider: 'openai'
     api_key: ${{ secrets.OPENAI_API_KEY }}
+    pr_number: ${{ github.event_name == 'workflow_dispatch' && inputs.pr_number || github.event.pull_request.number }}
     review_level: 'diff'
     include_globs: 'src/**/*.ts,lib/**/*.js'
     exclude_globs: '**/*.test.ts,**/*.spec.ts'
