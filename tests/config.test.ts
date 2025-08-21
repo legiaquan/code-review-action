@@ -199,6 +199,10 @@ describe('Config', () => {
       process.env.GITHUB_EVENT_NAME = 'push';
       delete process.env.GITHUB_EVENT_PATH;
 
+      // Mock the GitHub context to not have a pull request
+      const mockGithub = require('@actions/github');
+      mockGithub.context.payload = {};
+
       mockGetInput.mockReturnValue('');
 
       expect(() => Config.getPullRequestNumber()).toThrow(ConfigError);
