@@ -1,4 +1,5 @@
 import * as core from '@actions/core';
+import * as github from '@actions/github';
 import { ActionInputs, ProviderType, ReviewLevel, ConfigError } from '../types';
 import { FileUtils } from './file-utils';
 
@@ -314,25 +315,78 @@ export class Config {
    * Get pull request number
    */
   static getPullRequestNumber(): number {
-    const prNumber =
-      process.env.GITHUB_EVENT_NAME === 'pull_request'
-        ? process.env.GITHUB_EVENT_PATH
-          ? require(process.env.GITHUB_EVENT_PATH).number
-          : undefined
-        : core.getInput('pr_number', { required: false });
-
-    if (!prNumber) {
-      throw new ConfigError(
-        'Pull request number not found. This action should run on pull_request events.',
-      );
+    // Prefer GitHub Actions runtime context when available
+    const payloadPrNumber = github.context.payload?.pull_request?.number;
+    if (typeof payloadPrNumber === 'number' && payloadPrNumber > 0) {
+      return payloadPrNumber;
     }
 
-    const num = typeof prNumber === 'string' ? parseInt(prNumber, 10) : prNumber;
-
-    if (isNaN(num) || num <= 0) {
-      throw new ConfigError(`Invalid pull request number: ${prNumber}`);
+    // If it's a PR event, try reading the event payload file as a fallback
+    if (process.env.GITHUB_EVENT_NAME === 'pull_request' && process.env.GITHUB_EVENT_PATH) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const eventData = require(process.env.GITHUB_EVENT_PATH);
+        const filePr = eventData?.number ?? eventData?.pull_request?.number;
+        const prFromFile = typeof filePr === 'string' ? parseInt(filePr, 10) : filePr;
+        if (typeof prFromFile === 'number' && prFromFile > 0) {
+          return prFromFile;
+        }
+      } catch (e) {
+        core.debug(`Failed to read GITHUB_EVENT_PATH: ${e instanceof Error ? e.message : e}`);
+      }
     }
 
-    return num;
+    throw new ConfigError(
+      'Pull request number not found. This action should run on pull_request events or be associated with a PR context.',
+    );
+  }
+
+  /**
+   * Resolve pull request number with Octokit fallbacks for non-PR contexts
+   */
+  static async getPullRequestNumberAsync(): Promise<number> {
+    // First, try the synchronous/context-based detection
+    try {
+      const n = this.getPullRequestNumber();
+      if (n && n > 0) return n;
+    } catch {
+      // ignore and try Octokit-based fallbacks
+    }
+
+    try {
+      const { owner, repo } = this.getRepoInfo();
+      const token = this.getGitHubToken();
+      const octokit = github.getOctokit(token);
+
+      const sha = github.context.sha || process.env.GITHUB_SHA;
+      if (sha) {
+        const prsForCommit = await octokit.rest.repos.listPullRequestsAssociatedWithCommit({
+          owner,
+          repo,
+          commit_sha: sha,
+        } as any);
+        const pr = prsForCommit.data.find(p => p.state === 'open') || prsForCommit.data[0];
+        if (pr?.number) return pr.number;
+      }
+
+      const ref = github.context.ref || process.env.GITHUB_REF;
+      if (ref && ref.startsWith('refs/heads/')) {
+        const branch = ref.replace('refs/heads/', '');
+        const prsByHead = await octokit.rest.pulls.list({
+          owner,
+          repo,
+          state: 'open',
+          head: `${owner}:${branch}`,
+          per_page: 10,
+        });
+        if (prsByHead.data.length > 0) return prsByHead.data[0]!.number;
+      }
+    } catch (err) {
+      core.debug(`Octokit PR resolution failed: ${err instanceof Error ? err.message : err}`);
+    }
+
+    throw new ConfigError(
+      'Pull request number not found via context or Octokit. Ensure the commit/branch is associated with an open PR.',
+    );
   }
 }
