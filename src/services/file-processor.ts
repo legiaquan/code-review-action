@@ -204,14 +204,70 @@ export class FileProcessor {
 
     if (result.comment && result.comment.trim()) {
       core.info(`    ✅ Review completed - Found issues to report`);
+
+      // Generate suggestions based on the review comment
+      const suggestions = this.generateSuggestionsFromComment(result.comment, file.filename, chunk);
+
       return {
         ...result,
         comment: this.commentBuilder.formatReviewComment(result.comment, file.filename, chunk),
+        suggestions,
       };
     } else {
       core.info(`    ✅ Review completed - No issues found`);
       return null;
     }
+  }
+
+  /**
+   * Generate code suggestions from review comment
+   */
+  private generateSuggestionsFromComment(comment: string, filename: string, chunk: any): any[] {
+    const suggestions: any[] = [];
+
+    // Extract line numbers from the chunk
+    const startLine = chunk.startLine || 1;
+    const endLine = chunk.endLine || startLine;
+
+    // Split comment into actionable items
+    const lines = comment.split('\n').filter(line => line.trim().length > 0);
+
+    lines.forEach((line, index) => {
+      // Look for patterns that suggest code changes
+      if (line.includes('•') || line.includes('-') || line.includes('*')) {
+        const cleanLine = line.replace(/^[•\-*]\s*/, '').trim();
+
+        if (cleanLine.length > 10) {
+          // Only create suggestions for substantial feedback
+          suggestions.push({
+            path: filename,
+            line: startLine + Math.floor((index / lines.length) * (endLine - startLine)),
+            side: 'RIGHT' as const,
+            startLine: startLine,
+            endLine: endLine,
+            startSide: 'RIGHT' as const,
+            endSide: 'RIGHT' as const,
+            body: cleanLine,
+          });
+        }
+      }
+    });
+
+    // If no structured suggestions found, create one general suggestion
+    if (suggestions.length === 0 && comment.trim().length > 20) {
+      suggestions.push({
+        path: filename,
+        line: startLine,
+        side: 'RIGHT' as const,
+        startLine: startLine,
+        endLine: endLine,
+        startSide: 'RIGHT' as const,
+        endSide: 'RIGHT' as const,
+        body: comment.trim(),
+      });
+    }
+
+    return suggestions;
   }
 
   /**

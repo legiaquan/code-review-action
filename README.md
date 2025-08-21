@@ -11,6 +11,24 @@
 - 💰 **Cost Tracking**: Monitor token usage and estimated costs
 - 🔒 **Secure**: API keys are never logged, only diff content is sent
 - 📊 **Detailed Reports**: Comprehensive review statistics
+- 💡 **GitHub Review Suggestions**: Creates actionable review comments that users can resolve individually
+- 🔄 **Resolvable Conversations**: Each suggestion creates a separate review comment for easy tracking
+
+## How It Works
+
+Instead of posting a single large comment, this action now creates a **GitHub Pull Request Review** with:
+
+1. **Main Review Body**: Summary of all findings and statistics
+2. **Individual Suggestions**: Each issue becomes a separate review comment
+3. **Line-specific Feedback**: Comments are attached to specific code lines
+4. **Resolvable Conversations**: Users can resolve each suggestion individually
+
+This approach makes it easier for developers to:
+
+- Address issues one by one
+- Track progress on specific suggestions
+- Resolve conversations when changes are made
+- Get better visibility into review progress
 
 ## Supported Providers
 
@@ -456,50 +474,5 @@ Error: Rate limit exceeded
 **Large PR Issues**
 
 ```
-Error: Request too large
+
 ```
-
-- Reduce `max_chunk_lines` (try 200-300)
-- Use more specific `include_globs`
-- Consider breaking large PRs into smaller ones
-
-### Debug Mode
-
-Enable debug logging by setting the `ACTIONS_STEP_DEBUG` secret to `true` in your repository.
-
-## Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-### Areas for Contribution
-
-- 🔌 New AI provider implementations
-- 🧪 Additional test coverage
-- 📚 Documentation improvements
-- 🐛 Bug fixes and performance improvements
-- 🎨 UI/UX enhancements for review comments
-
-## License
-
-MIT License - see [LICENSE](LICENSE) file for details.
-
-## Changelog
-
-### v1.0.0
-
-- Initial release with Gemini and OpenAI support
-- Pluggable provider architecture
-- Comprehensive file filtering and chunking
-- Custom rules support
-- Cost tracking and statistics
-
-## Support
-
-- 📖 [Documentation](https://github.com/your-username/ai-code-review-action/wiki)
-- 🐛 [Issue Tracker](https://github.com/your-username/ai-code-review-action/issues)
-- 💬 [Discussions](https://github.com/your-username/ai-code-review-action/discussions)
-- 📧 [Email Support](mailto:support@your-domain.com)
-
----
-
-**Made with ❤️ for the developer community**

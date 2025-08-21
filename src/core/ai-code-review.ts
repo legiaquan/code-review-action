@@ -98,14 +98,23 @@ export class AICodeReview {
    */
   private async postReviewComment(reviewResults: any[], files: any[]): Promise<void> {
     try {
-      const comment = this.commentBuilder.buildFinalComment(reviewResults, files);
-      core.info('💬 Posting review comment to PR...');
+      if (reviewResults.length === 0) {
+        core.info('💬 No review results to post');
+        return;
+      }
 
-      await this.githubClient.createComment(this.prNumber, comment);
-      core.info('✅ Review comment posted successfully');
+      // Build review with suggestions
+      const review = this.commentBuilder.buildReviewWithSuggestions(reviewResults, files);
+
+      core.info('💬 Posting review with suggestions to PR...');
+      core.info(`📝 Review event: ${review.event}`);
+      core.info(`💡 Suggestions count: ${review.comments.length}`);
+
+      await this.githubClient.createReview(this.prNumber, review);
+      core.info('✅ Review with suggestions posted successfully');
     } catch (error) {
       core.error(
-        `Failed to post review comment: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Failed to post review: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
       throw error;
     }
