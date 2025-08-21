@@ -1,5 +1,5 @@
 name: 'AI-Powered Code Review'
-description: 'Intelligent code review using AI providers (Gemini, OpenAI) with pluggable architecture'
+description: 'Intelligent code review using AI providers (Gemini, OpenAI) with GitHub review suggestions and actionable feedback'
 author: 'Quan Le'
 branding:
   icon: 'eye'
@@ -53,3 +53,8 @@ inputs:
 runs:
   using: 'node20'
   main: 'dist/index.js'
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write

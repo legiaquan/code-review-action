@@ -146,6 +146,59 @@ class GitHubClient {
     }
   }
   /**
+   * Create a review on a pull request with suggestions
+   */
+  async createReview(prNumber, review) {
+    // First, validate token permissions
+    const hasPermissions = await this.validatePermissions();
+    if (!hasPermissions) {
+      core.warning(
+        '⚠️ GitHub token may not have sufficient permissions. Proceeding with fallback API...',
+      );
+    }
+    // Try Octokit first
+    try {
+      const response = await this.retryOperation(async () => {
+        return await this.octokit.rest.pulls.createReview({
+          owner: this.repoInfo.owner,
+          repo: this.repoInfo.repo,
+          pull_number: prNumber,
+          body: review.body,
+          event: review.event,
+          comments: review.comments,
+        });
+      });
+      core.info('✅ Review posted successfully via Octokit');
+      return {
+        id: response.data.id,
+        html_url: response.data.html_url,
+        state: response.data.state || 'COMMENTED',
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      core.warning(`Octokit failed: ${errorMessage}`);
+      // Check if it's a permission issue
+      if (this.isPermissionError(errorMessage)) {
+        core.info('🔄 Trying fallback GitHub API...');
+        try {
+          const response = await this.retryOperation(async () => {
+            return await this.createReviewWithFetch(prNumber, review);
+          });
+          core.info('✅ Review posted successfully via fallback API');
+          return response;
+        } catch (fallbackError) {
+          const fallbackMessage =
+            fallbackError instanceof Error ? fallbackError.message : 'Unknown error';
+          core.error(`Fallback API also failed: ${fallbackMessage}`);
+          // Provide detailed troubleshooting information
+          throw new Error(this.buildPermissionErrorMessage(errorMessage, fallbackMessage));
+        }
+      }
+      // If it's not a permission error, throw immediately
+      throw new Error(`Failed to create review: ${errorMessage}`);
+    }
+  }
+  /**
    * Create comment using direct GitHub REST API
    */
   async createCommentWithFetch(issueNumber, body) {
@@ -170,6 +223,37 @@ class GitHubClient {
     const result = await response.json();
     core.info(`💬 Comment created successfully with ID: ${result.id}`);
     core.debug(`Comment URL: ${result.html_url}`);
+    return result;
+  }
+  /**
+   * Create review using direct GitHub REST API
+   */
+  async createReviewWithFetch(prNumber, review) {
+    const token = utils_1.Config.getGitHubToken();
+    const url = `https://api.github.com/repos/${this.repoInfo.owner}/${this.repoInfo.repo}/pulls/${prNumber}/reviews`;
+    core.debug(`🔗 Posting review to: ${url}`);
+    core.debug(`🔑 Using token: ${token.substring(0, 8)}...`);
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/vnd.github+json',
+        Authorization: `Bearer ${token}`,
+        'X-GitHub-Api-Version': '2022-11-28',
+        'Content-Type': 'application/json',
+        'User-Agent': 'AI-Code-Review-Action/1.0',
+      },
+      body: JSON.stringify({
+        body: review.body,
+        event: review.event,
+        comments: review.comments,
+      }),
+    });
+    if (!response.ok) {
+      await this.handleApiError(response);
+    }
+    const result = await response.json();
+    core.info(`💬 Review created successfully with ID: ${result.id}`);
+    core.debug(`Review URL: ${result.html_url}`);
     return result;
   }
   /**

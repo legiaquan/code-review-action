@@ -100,7 +100,7 @@ export class GeminiProvider extends BaseProvider {
   protected buildPrompt(params: ReviewParams): string {
     const basePrompt = super.buildPrompt(params);
 
-    // Add Gemini-specific instructions
+    // Add Gemini-specific instructions for better suggestions
     const geminiInstructions = `
 Please respond in markdown format for better readability. Use the following structure:
 
@@ -117,6 +117,9 @@ Please respond in markdown format for better readability. Use the following stru
 
 ### 💡 Suggestions
 - Provide concrete improvement suggestions with code examples
+- Use bullet points (•) for each suggestion to help with parsing
+
+IMPORTANT: Structure your suggestions using bullet points (•) so they can be properly parsed into individual GitHub review comments. Each bullet point should be a specific, actionable suggestion.
 
 If no issues are found in a category, you can omit that section.`;
 

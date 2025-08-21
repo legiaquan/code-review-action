@@ -82,7 +82,7 @@ export class OpenAIProvider extends BaseProvider {
   protected buildPrompt(params: ReviewParams): string {
     const basePrompt = super.buildPrompt(params);
 
-    // Add OpenAI-specific instructions
+    // Add OpenAI-specific instructions for better suggestions
     const openaiInstructions = `
 Please structure your response as follows:
 
@@ -98,10 +98,13 @@ Please structure your response as follows:
 - Provide specific, actionable suggestions
 - Include code examples where helpful
 - Prioritize the most critical issues
+- Use bullet points (•) for each suggestion to help with parsing
 
 ### Summary
 - Brief overall assessment of the code quality
 - Any positive aspects worth noting
+
+IMPORTANT: Structure your suggestions using bullet points (•) so they can be properly parsed into individual GitHub review comments. Each bullet point should be a specific, actionable suggestion.
 
 Format your response in clear markdown for readability.`;
 

@@ -11,6 +11,36 @@ export interface ReviewResult {
   tokensUsed?: number | undefined;
   costUSD?: number | undefined;
   provider?: string;
+  suggestions?: CodeSuggestion[];
+}
+
+export interface CodeSuggestion {
+  path: string;
+  line: number;
+  side: 'LEFT' | 'RIGHT';
+  startLine?: number;
+  endLine?: number;
+  startSide?: 'LEFT' | 'RIGHT';
+  endSide?: 'LEFT' | 'RIGHT';
+  body: string;
+}
+
+export interface GitHubReview {
+  body: string;
+  event: 'COMMENT' | 'REQUEST_CHANGES' | 'APPROVE';
+  comments: GitHubReviewComment[];
+}
+
+export interface GitHubReviewComment {
+  path: string;
+  position: number;
+  body: string;
+  line?: number;
+  side?: 'LEFT' | 'RIGHT';
+  startLine?: number;
+  endLine?: number;
+  startSide?: 'LEFT' | 'RIGHT';
+  endSide?: 'LEFT' | 'RIGHT';
 }
 
 export interface AIProvider {
