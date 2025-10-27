@@ -35,7 +35,7 @@
     "@google/generative-ai": "^0.15.0",
     "@octokit/rest": "^20.0.2",
     "minimatch": "^9.0.3",
-    "openai": "^4.20.1"
+    "openai": "^6.7.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.8",
